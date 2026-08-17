@@ -4,168 +4,244 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tracker de Macros</title>
-    <!-- Librería para el escáner de código de barras -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         :root {
-            --bg: #f4f4f5;
-            --surface: #ffffff;
-            --primary: #2563eb;
-            --text: #18181b;
-            --text-muted: #71717a;
-            --border: #e4e4e7;
-            --radius: 8px;
+            --bg-main: #121212;
+            --bg-card: #1c1c1e;
+            --header-red: #fb5151;
+            --color-carb: #ff4b72;
+            --color-pro: #4381f1;
+            --color-fat: #eab308;
+            --text-light: #ffffff;
+            --text-muted: #8e8e93;
+            --border: #2c2c2e;
+            --radius: 12px;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
-        .card { background: var(--surface); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border); }
-        h2 { font-size: 1.2rem; margin-bottom: 15px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background: var(--bg-main); color: var(--text-light); padding-bottom: 70px; }
         
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
-        .form-group-full { grid-column: span 2; }
+        /* Header */
+        .app-header { background: var(--header-red); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; font-weight: bold; }
+        .app-header button { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; }
         
-        label { font-size: 0.85rem; font-weight: bold; color: var(--text-muted); }
-        input, select { padding: 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 1rem; }
-        button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: var(--radius); font-size: 1rem; cursor: pointer; font-weight: bold; }
-        button:hover { opacity: 0.9; }
-        .btn-secondary { background: var(--text-muted); }
+        /* Top Macros Summary */
+        .top-summary { background: var(--bg-card); padding: 15px 20px; border-bottom: 1px solid var(--border); }
+        .macro-headers { display: flex; justify-content: space-between; text-align: center; margin-bottom: 10px; font-size: 0.85rem; font-weight: 500; }
+        .mh-carb { color: var(--color-carb); flex: 1; }
+        .mh-pro { color: var(--color-pro); flex: 1; }
+        .mh-fat { color: var(--color-fat); flex: 1; }
+        
+        .macro-values { display: flex; justify-content: space-between; text-align: center; font-size: 0.9rem; font-weight: bold; margin-bottom: 10px; }
+        .mv-carb { color: var(--color-carb); flex: 1; }
+        .mv-pro { color: var(--color-pro); flex: 1; }
+        .mv-fat { color: var(--color-fat); flex: 1; }
 
-        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center; }
-        .stat-box { padding: 10px; background: var(--bg); border-radius: var(--radius); }
-        .stat-value { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; }
-        .stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
-        .stat-target { font-size: 0.7rem; color: var(--primary); margin-top: 5px; }
+        .progress-container { display: flex; gap: 10px; margin-bottom: 15px; }
+        .progress-bar-wrapper { flex: 1; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+        .fill-carb { background: var(--color-carb); }
+        .fill-pro { background: var(--color-pro); }
+        .fill-fat { background: var(--color-fat); }
         
-        .progress-bar { height: 6px; background: var(--border); border-radius: 3px; margin-top: 5px; overflow: hidden; }
-        .progress-fill { height: 100%; background: var(--primary); transition: width 0.3s ease; }
+        .cal-summary { text-align: center; color: var(--color-pro); font-size: 0.85rem; font-weight: bold; }
+
+        /* Meal Cards */
+        .container { padding: 15px; display: flex; flex-direction: column; gap: 15px; }
+        .meal-card { background: var(--bg-card); border-radius: var(--radius); padding: 15px; }
+        .meal-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1rem; margin-bottom: 15px; }
+        
+        .meal-stats { display: flex; justify-content: space-between; text-align: center; margin-bottom: 15px; font-size: 0.8rem; font-weight: bold; }
+        .ms-col { display: flex; flex-direction: column; gap: 3px; }
+        .ms-carb { color: var(--color-carb); }
+        .ms-pro { color: var(--color-pro); }
+        .ms-fat { color: var(--color-fat); }
+        .ms-cal { color: var(--color-pro); }
+        
+        .food-list { list-style: none; margin-bottom: 15px; }
+        .food-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+        .food-item:last-child { border-bottom: none; }
+        .food-macros-text { color: var(--text-muted); font-size: 0.75rem; }
+        .delete-btn { color: var(--header-red); background: none; border: none; font-weight: bold; margin-left: 10px; cursor: pointer; }
+
+        .add-food-btn { width: 100%; background: none; border: none; color: var(--header-red); font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 5px; cursor: pointer; padding: 10px 0; }
+        
+        /* Bottom Nav */
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: var(--bg-card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 15px 0; z-index: 10; }
+        .nav-item { color: var(--text-muted); cursor: pointer; font-size: 1.2rem; font-weight: bold; }
+        .nav-item.active { color: var(--header-red); }
+
+        /* Modals */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); z-index: 20; overflow-y: auto; padding: 20px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .close-modal { background: none; border: none; color: var(--text-light); font-size: 1.5rem; cursor: pointer; }
+
+        /* Inputs & Forms inside Modal */
+        input, select { width: 100%; padding: 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); color: white; font-size: 1rem; margin-bottom: 10px; }
+        .btn-primary { width: 100%; padding: 12px; background: var(--header-red); color: white; border: none; border-radius: var(--radius); font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-secondary { width: 100%; padding: 12px; background: var(--border); color: white; border: none; border-radius: var(--radius); font-weight: bold; cursor: pointer; margin-top: 10px; }
         
         .search-results { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
-        .result-item { border: 1px solid var(--border); padding: 10px; border-radius: var(--radius); display: flex; flex-direction: column; gap: 10px; }
-        .result-header { font-weight: bold; }
-        .result-macros { font-size: 0.85rem; color: var(--text-muted); }
-        .result-actions { display: flex; gap: 10px; }
-        .result-actions input { flex: 1; }
-        .result-actions button { width: auto; }
+        .result-item { background: var(--bg-card); padding: 10px; border-radius: var(--radius); }
+        .result-actions { display: flex; gap: 10px; margin-top: 10px; }
+        .result-actions input { margin: 0; flex: 1; }
+        .result-actions button { margin: 0; width: auto; padding: 10px 15px; }
 
-        .food-list { list-style: none; }
-        .food-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
-        .food-item:last-child { border-bottom: none; }
-        .food-name { font-weight: bold; }
-        .food-macros { font-size: 0.85rem; color: var(--text-muted); }
-        .delete-btn { color: #ef4444; cursor: pointer; border: none; background: none; font-size: 0.9rem; margin-left: 10px; font-weight: bold; }
-        
         #reader { width: 100%; margin-top: 15px; display: none; }
-        
-        .footer { text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 20px 0; border-top: 1px solid var(--border); margin-top: 10px; }
+        .footer-version { text-align: center; color: var(--text-muted); font-size: 0.75rem; padding: 20px 0; }
     </style>
 </head>
 <body>
 
+<header class="app-header">
+    <button>&lt;</button>
+    <span>Hoy</span>
+    <button>&gt;</button>
+</header>
+
+<section class="top-summary">
+    <div class="macro-headers">
+        <div class="mh-carb">Carbohidratos</div>
+        <div class="mh-pro">Proteínas</div>
+        <div class="mh-fat">Grasas</div>
+    </div>
+    <div class="macro-values">
+        <div class="mv-carb" id="top-carb-text">0 / 0 g</div>
+        <div class="mv-pro" id="top-pro-text">0 / 0 g</div>
+        <div class="mv-fat" id="top-fat-text">0 / 0 g</div>
+    </div>
+    <div class="progress-container">
+        <div class="progress-bar-wrapper"><div class="progress-fill fill-carb" id="top-carb-bar" style="width: 0%"></div></div>
+        <div class="progress-bar-wrapper"><div class="progress-fill fill-pro" id="top-pro-bar" style="width: 0%"></div></div>
+        <div class="progress-bar-wrapper"><div class="progress-fill fill-fat" id="top-fat-bar" style="width: 0%"></div></div>
+    </div>
+    <div class="cal-summary" id="top-cal-text">0 / 0 kcal</div>
+</section>
+
 <div class="container">
-    <div class="card">
-        <h2>Calculadora de Objetivos</h2>
-        <form id="calc-form" class="form-grid">
-            <div class="form-group">
-                <label>Sexo</label>
-                <select id="calc-sex" required>
-                    <option value="m">Masculino</option>
-                    <option value="f">Femenino</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Edad</label>
-                <input type="number" id="calc-age" required min="15" max="100">
-            </div>
-            <div class="form-group">
-                <label>Peso (kg)</label>
-                <input type="number" id="calc-weight" step="0.1" required min="30">
-            </div>
-            <div class="form-group">
-                <label>Altura (cm)</label>
-                <input type="number" id="calc-height" required min="100">
-            </div>
-            <div class="form-group form-group-full">
-                <label>Actividad Física</label>
-                <select id="calc-activity" required>
-                    <option value="1.2">Sedentario (Poco o nulo ejercicio)</option>
-                    <option value="1.375">Ligero (Ejercicio 1-3 días/semana)</option>
-                    <option value="1.55">Moderado (Ejercicio 3-5 días/semana)</option>
-                    <option value="1.725">Activo (Ejercicio 6-7 días/semana)</option>
-                </select>
-            </div>
-            <div class="form-group form-group-full">
-                <label>Objetivo</label>
-                <select id="calc-goal" required>
-                    <option value="-500">Perder peso (Déficit calórico)</option>
-                    <option value="0">Mantener peso</option>
-                    <option value="500">Ganar masa muscular (Superávit)</option>
-                </select>
-            </div>
-            <button type="submit" class="form-group-full">Calcular y Guardar Metas</button>
-        </form>
-    </div>
-
-    <div class="card">
-        <h2>Progreso Diario</h2>
-        <div class="summary-grid">
-            <div class="stat-box">
-                <div class="stat-value" id="cal-val">0</div>
-                <div class="stat-label">Kcal</div>
-                <div class="progress-bar"><div class="progress-fill" id="cal-bar" style="width: 0%"></div></div>
-                <div class="stat-target" id="cal-target">/ 0</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-value" id="pro-val">0g</div>
-                <div class="stat-label">Prot</div>
-                <div class="progress-bar"><div class="progress-fill" id="pro-bar" style="width: 0%"></div></div>
-                <div class="stat-target" id="pro-target">/ 0g</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-value" id="car-val">0g</div>
-                <div class="stat-label">Carb</div>
-                <div class="progress-bar"><div class="progress-fill" id="car-bar" style="width: 0%"></div></div>
-                <div class="stat-target" id="car-target">/ 0g</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-value" id="fat-val">0g</div>
-                <div class="stat-label">Grasa</div>
-                <div class="progress-bar"><div class="progress-fill" id="fat-bar" style="width: 0%"></div></div>
-                <div class="stat-target" id="fat-target">/ 0g</div>
-            </div>
+    <div class="meal-card">
+        <div class="meal-header"><span>Desayuno</span></div>
+        <div class="meal-stats">
+            <div class="ms-col ms-carb"><span id="desayuno-carb">0 / 0</span><span>Carbohidratos</span></div>
+            <div class="ms-col ms-pro"><span id="desayuno-pro">0 / 0</span><span>Proteínas</span></div>
+            <div class="ms-col ms-fat"><span id="desayuno-fat">0 / 0</span><span>Grasas</span></div>
+            <div class="ms-col ms-cal"><span id="desayuno-cal">0 / 0</span><span>Calorías</span></div>
         </div>
+        <ul class="food-list" id="list-desayuno"></ul>
+        <button class="add-food-btn" onclick="openSearch('desayuno')">+ Añadir alimento</button>
     </div>
 
-    <div class="card">
-        <h2>Buscar Alimento</h2>
-        <div style="display: flex; gap: 10px;">
-            <input type="text" id="search-input" placeholder="Nombre o código de barras">
-            <button type="button" onclick="searchFood()" style="width: auto;">Buscar</button>
-            <button type="button" onclick="toggleScanner()" class="btn-secondary" style="width: auto;">Escanear</button>
+    <div class="meal-card">
+        <div class="meal-header"><span>Almuerzo</span></div>
+        <div class="meal-stats">
+            <div class="ms-col ms-carb"><span id="almuerzo-carb">0 / 0</span><span>Carbohidratos</span></div>
+            <div class="ms-col ms-pro"><span id="almuerzo-pro">0 / 0</span><span>Proteínas</span></div>
+            <div class="ms-col ms-fat"><span id="almuerzo-fat">0 / 0</span><span>Grasas</span></div>
+            <div class="ms-col ms-cal"><span id="almuerzo-cal">0 / 0</span><span>Calorías</span></div>
         </div>
-        <div id="reader"></div>
-        <div id="search-results" class="search-results"></div>
+        <ul class="food-list" id="list-almuerzo"></ul>
+        <button class="add-food-btn" onclick="openSearch('almuerzo')">+ Añadir alimento</button>
     </div>
 
-    <div class="card">
-        <h2>Alimentos Consumidos</h2>
-        <ul class="food-list" id="food-list"></ul>
+    <div class="meal-card">
+        <div class="meal-header"><span>Cena</span></div>
+        <div class="meal-stats">
+            <div class="ms-col ms-carb"><span id="cena-carb">0 / 0</span><span>Carbohidratos</span></div>
+            <div class="ms-col ms-pro"><span id="cena-pro">0 / 0</span><span>Proteínas</span></div>
+            <div class="ms-col ms-fat"><span id="cena-fat">0 / 0</span><span>Grasas</span></div>
+            <div class="ms-col ms-cal"><span id="cena-cal">0 / 0</span><span>Calorías</span></div>
+        </div>
+        <ul class="food-list" id="list-cena"></ul>
+        <button class="add-food-btn" onclick="openSearch('cena')">+ Añadir alimento</button>
     </div>
     
-    <div class="footer">
-        v1.1.0 | Último cambio: Se agregó lector de código de barras e integración con API por código
+    <div class="footer-version">
+        v1.2.0 | Último cambio: Integración de UI modo oscuro por comidas
     </div>
+</div>
+
+<nav class="bottom-nav">
+    <div class="nav-item active">Diario</div>
+    <div class="nav-item" onclick="openCalc()">Metas</div>
+</nav>
+
+<!-- Modal Buscador -->
+<div class="modal" id="search-modal">
+    <div class="modal-header">
+        <h2 id="search-title">Añadir alimento</h2>
+        <button class="close-modal" onclick="closeModals()">X</button>
+    </div>
+    <div style="display: flex; gap: 10px;">
+        <input type="text" id="search-input" placeholder="Nombre del producto...">
+        <button class="btn-primary" onclick="searchFood()" style="width: auto; margin: 0;">Buscar</button>
+    </div>
+    <button class="btn-secondary" onclick="toggleScanner()">Escanear Código de Barras</button>
+    <div id="reader"></div>
+    <div id="search-results" class="search-results"></div>
+</div>
+
+<!-- Modal Calculadora -->
+<div class="modal" id="calc-modal">
+    <div class="modal-header">
+        <h2>Calculadora de Objetivos</h2>
+        <button class="close-modal" onclick="closeModals()">X</button>
+    </div>
+    <form id="calc-form">
+        <label>Sexo</label>
+        <select id="calc-sex" required>
+            <option value="m">Masculino</option>
+            <option value="f">Femenino</option>
+        </select>
+        <label>Edad</label>
+        <input type="number" id="calc-age" required min="15" max="100">
+        <label>Peso (kg)</label>
+        <input type="number" id="calc-weight" step="0.1" required min="30">
+        <label>Altura (cm)</label>
+        <input type="number" id="calc-height" required min="100">
+        <label>Actividad Física</label>
+        <select id="calc-activity" required>
+            <option value="1.2">Sedentario</option>
+            <option value="1.375">Ligero</option>
+            <option value="1.55">Moderado</option>
+            <option value="1.725">Activo</option>
+        </select>
+        <label>Objetivo</label>
+        <select id="calc-goal" required>
+            <option value="-500">Perder peso</option>
+            <option value="0">Mantener peso</option>
+            <option value="500">Ganar masa muscular</option>
+        </select>
+        <button type="submit" class="btn-primary">Guardar Metas</button>
+    </form>
 </div>
 
 <script>
     let goals = JSON.parse(localStorage.getItem('macroGoals')) || { cal: 2000, pro: 150, car: 200, fat: 65 };
     let entries = JSON.parse(localStorage.getItem('macroEntries')) || [];
+    let currentMealTarget = 'desayuno';
     let html5QrcodeScanner = null;
+
+    // Adaptación de datos antiguos
+    entries = entries.map(e => e.meal ? e : { ...e, meal: 'desayuno' });
+
+    function openSearch(meal) {
+        currentMealTarget = meal;
+        document.getElementById('search-title').textContent = `Añadir a ${meal.charAt(0).toUpperCase() + meal.slice(1)}`;
+        document.getElementById('search-modal').style.display = 'block';
+    }
+
+    function openCalc() {
+        document.getElementById('calc-modal').style.display = 'block';
+    }
+
+    function closeModals() {
+        document.getElementById('search-modal').style.display = 'none';
+        document.getElementById('calc-modal').style.display = 'none';
+        closeScanner();
+    }
 
     document.getElementById('calc-form').addEventListener('submit', (e) => {
         e.preventDefault();
-        
         const sex = document.getElementById('calc-sex').value;
         const weight = parseFloat(document.getElementById('calc-weight').value);
         const height = parseFloat(document.getElementById('calc-height').value);
@@ -173,9 +249,7 @@
         const activity = parseFloat(document.getElementById('calc-activity').value);
         const goalModifier = parseFloat(document.getElementById('calc-goal').value);
 
-        let bmr = (10 * weight) + (6.25 * height) - (5 * age);
-        bmr += (sex === 'm') ? 5 : -161;
-
+        let bmr = (10 * weight) + (6.25 * height) - (5 * age) + (sex === 'm' ? 5 : -161);
         const tdee = Math.round((bmr * activity) + goalModifier);
         
         goals = {
@@ -187,57 +261,49 @@
 
         localStorage.setItem('macroGoals', JSON.stringify(goals));
         updateUI();
-        alert('Metas actualizadas.');
+        closeModals();
     });
 
     async function searchFood() {
         const query = document.getElementById('search-input').value;
         if (!query) return;
 
-        const resultsContainer = document.getElementById('search-results');
-        resultsContainer.innerHTML = 'Buscando...';
+        const container = document.getElementById('search-results');
+        container.innerHTML = 'Buscando...';
 
         try {
             const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=5`;
             const res = await fetch(url);
             if (!res.ok) throw new Error(`HTTP: ${res.status}`);
-
             const data = await res.json();
-            resultsContainer.innerHTML = '';
+            container.innerHTML = '';
             
             if (!data.products || data.products.length === 0) {
-                resultsContainer.innerHTML = 'No se encontraron resultados.';
+                container.innerHTML = 'No se encontraron resultados.';
                 return;
             }
-
-            renderProducts(data.products, resultsContainer);
+            renderProducts(data.products, container);
         } catch (error) {
-            console.error(error);
-            resultsContainer.innerHTML = `Error: ${error.message}`;
+            container.innerHTML = `Error: ${error.message}`;
         }
     }
 
     async function searchByBarcode(barcode) {
-        const resultsContainer = document.getElementById('search-results');
-        resultsContainer.innerHTML = `Buscando código: ${barcode}...`;
-        
+        const container = document.getElementById('search-results');
+        container.innerHTML = `Buscando código: ${barcode}...`;
         try {
             const url = `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`;
             const res = await fetch(url);
             if (!res.ok) throw new Error(`HTTP: ${res.status}`);
-
             const data = await res.json();
-            resultsContainer.innerHTML = '';
-
+            container.innerHTML = '';
             if (data.status !== 1) {
-                resultsContainer.innerHTML = 'Producto no encontrado en la base de datos.';
+                container.innerHTML = 'Producto no encontrado.';
                 return;
             }
-
-            renderProducts([data.product], resultsContainer);
+            renderProducts([data.product], container);
         } catch (error) {
-            console.error(error);
-            resultsContainer.innerHTML = `Error: ${error.message}`;
+            container.innerHTML = `Error: ${error.message}`;
         }
     }
 
@@ -248,17 +314,16 @@
             const pro = p.nutriments.proteins_100g || 0;
             const car = p.nutriments.carbohydrates_100g || 0;
             const fat = p.nutriments.fat_100g || 0;
-
             const id = Math.random().toString(36).substring(2, 11);
             
             const item = document.createElement('div');
             item.className = 'result-item';
             item.innerHTML = `
-                <div class="result-header">${name}</div>
-                <div class="result-macros">100g: ${cal} kcal | P: ${pro}g | C: ${car}g | G: ${fat}g</div>
+                <div style="font-weight:bold; margin-bottom:5px;">${name}</div>
+                <div style="font-size:0.8rem; color:var(--text-muted);">100g: ${cal} kcal | P:${pro}g | C:${car}g | G:${fat}g</div>
                 <div class="result-actions">
                     <input type="number" id="grams-${id}" placeholder="Gramos" value="100" min="1">
-                    <button onclick="addApiFood('${name.replace(/'/g, "\\'")}', ${cal}, ${pro}, ${car}, ${fat}, '${id}')">Agregar</button>
+                    <button class="btn-primary" onclick="addApiFood('${name.replace(/'/g, "\\'")}', ${cal}, ${pro}, ${car}, ${fat}, '${id}')">Añadir</button>
                 </div>
             `;
             container.appendChild(item);
@@ -270,8 +335,9 @@
         if (isNaN(grams) || grams <= 0) return;
 
         const multiplier = grams / 100;
-        
         entries.push({
+            id: Date.now(),
+            meal: currentMealTarget,
             name: `${name} (${grams}g)`,
             cal: Math.round(cal100 * multiplier),
             pro: Math.round(pro100 * multiplier),
@@ -281,16 +347,20 @@
 
         document.getElementById('search-results').innerHTML = '';
         document.getElementById('search-input').value = '';
+        closeModals();
         updateUI();
     };
 
     function toggleScanner() {
         const readerDiv = document.getElementById('reader');
-        if (readerDiv.style.display === 'none') {
+        if (readerDiv.style.display === 'none' || readerDiv.style.display === '') {
             readerDiv.style.display = 'block';
             if (!html5QrcodeScanner) {
                 html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
-                html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+                html5QrcodeScanner.render((decodedText) => {
+                    closeScanner();
+                    searchByBarcode(decodedText);
+                }, () => {});
             }
         } else {
             closeScanner();
@@ -306,58 +376,57 @@
         }
     }
 
-    function onScanSuccess(decodedText, decodedResult) {
-        closeScanner();
-        searchByBarcode(decodedText);
-    }
-
-    function onScanFailure(error) {
-        // Fallos continuos de lectura mientras se escanea
+    function calculateTotals(filterMeal = null) {
+        const filtered = filterMeal ? entries.filter(e => e.meal === filterMeal) : entries;
+        return filtered.reduce((acc, curr) => ({
+            cal: acc.cal + curr.cal, pro: acc.pro + curr.pro, car: acc.car + curr.car, fat: acc.fat + curr.fat
+        }), { cal: 0, pro: 0, car: 0, fat: 0 });
     }
 
     function updateUI() {
-        const totals = entries.reduce((acc, curr) => ({
-            cal: acc.cal + curr.cal,
-            pro: acc.pro + curr.pro,
-            car: acc.car + curr.car,
-            fat: acc.fat + curr.fat
-        }), { cal: 0, pro: 0, car: 0, fat: 0 });
+        const total = calculateTotals();
+        
+        // Top Summary Update
+        document.getElementById('top-carb-text').textContent = `${total.car} / ${goals.car} g`;
+        document.getElementById('top-pro-text').textContent = `${total.pro} / ${goals.pro} g`;
+        document.getElementById('top-fat-text').textContent = `${total.fat} / ${goals.fat} g`;
+        document.getElementById('top-cal-text').textContent = `${total.cal} / ${goals.cal} kcal`;
 
-        document.getElementById('cal-val').textContent = totals.cal;
-        document.getElementById('pro-val').textContent = totals.pro + 'g';
-        document.getElementById('car-val').textContent = totals.car + 'g';
-        document.getElementById('fat-val').textContent = totals.fat + 'g';
+        document.getElementById('top-carb-bar').style.width = Math.min((total.car / goals.car) * 100, 100) + '%';
+        document.getElementById('top-pro-bar').style.width = Math.min((total.pro / goals.pro) * 100, 100) + '%';
+        document.getElementById('top-fat-bar').style.width = Math.min((total.fat / goals.fat) * 100, 100) + '%';
 
-        document.getElementById('cal-target').textContent = `/ ${goals.cal}`;
-        document.getElementById('pro-target').textContent = `/ ${goals.pro}g`;
-        document.getElementById('car-target').textContent = `/ ${goals.car}g`;
-        document.getElementById('fat-target').textContent = `/ ${goals.fat}g`;
+        // Meal Sections Update
+        ['desayuno', 'almuerzo', 'cena'].forEach(meal => {
+            const mealTotals = calculateTotals(meal);
+            const goalFraction = 3; // Estimación simple para metas por comida (tercios)
 
-        document.getElementById('cal-bar').style.width = Math.min((totals.cal / goals.cal) * 100, 100) + '%';
-        document.getElementById('pro-bar').style.width = Math.min((totals.pro / goals.pro) * 100, 100) + '%';
-        document.getElementById('car-bar').style.width = Math.min((totals.car / goals.car) * 100, 100) + '%';
-        document.getElementById('fat-bar').style.width = Math.min((totals.fat / goals.fat) * 100, 100) + '%';
+            document.getElementById(`${meal}-carb`).textContent = `${mealTotals.car} / ${Math.round(goals.car/goalFraction)}`;
+            document.getElementById(`${meal}-pro`).textContent = `${mealTotals.pro} / ${Math.round(goals.pro/goalFraction)}`;
+            document.getElementById(`${meal}-fat`).textContent = `${mealTotals.fat} / ${Math.round(goals.fat/goalFraction)}`;
+            document.getElementById(`${meal}-cal`).textContent = `${mealTotals.cal} / ${Math.round(goals.cal/goalFraction)}`;
 
-        const listEl = document.getElementById('food-list');
-        listEl.innerHTML = '';
-        entries.forEach((entry, index) => {
-            const li = document.createElement('li');
-            li.className = 'food-item';
-            li.innerHTML = `
-                <div>
-                    <div class="food-name">${entry.name}</div>
-                    <div class="food-macros">${entry.cal} kcal | P: ${entry.pro}g | C: ${entry.car}g | G: ${entry.fat}g</div>
-                </div>
-                <button class="delete-btn" onclick="deleteEntry(${index})">X</button>
-            `;
-            listEl.appendChild(li);
+            const listEl = document.getElementById(`list-${meal}`);
+            listEl.innerHTML = '';
+            entries.filter(e => e.meal === meal).forEach(entry => {
+                const li = document.createElement('li');
+                li.className = 'food-item';
+                li.innerHTML = `
+                    <div style="flex:1;">
+                        <div>${entry.name}</div>
+                        <div class="food-macros-text">${entry.cal} kcal | P: ${entry.pro}g | C: ${entry.car}g | G: ${entry.fat}g</div>
+                    </div>
+                    <button class="delete-btn" onclick="deleteEntry(${entry.id})">X</button>
+                `;
+                listEl.appendChild(li);
+            });
         });
 
         localStorage.setItem('macroEntries', JSON.stringify(entries));
     }
 
-    window.deleteEntry = function(index) {
-        entries.splice(index, 1);
+    window.deleteEntry = function(id) {
+        entries = entries.filter(e => e.id !== id);
         updateUI();
     };
 
