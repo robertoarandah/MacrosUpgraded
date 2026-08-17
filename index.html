@@ -138,6 +138,9 @@
         .ns-m-pro { color: var(--color-pro); margin-right: 5px; }
         .ns-m-fat { color: var(--color-fat); }
 
+        .ns-empty-state { padding: 40px 20px; text-align: center; color: #8e8e93; }
+        .ns-empty-state p { margin-bottom: 15px; font-size: 0.9rem; }
+
         .ns-promo-banner { background: #1c1c1e; border-radius: 10px; margin: 15px 20px; padding: 15px; text-align: center; color: #e5e5ea; font-size: 0.9rem; display: flex; justify-content: center; align-items: center; gap: 10px; border: 1px solid #2c2c2e; }
         .ns-promo-icon { color: #32d74b; font-size: 1.2rem; }
     </style>
@@ -207,7 +210,7 @@
     </div>
     
     <div class="footer-version">
-        v1.5.0 | Funciones UI, Escáner activado y Nueva Interfaz de Búsqueda iOS implementada
+        v1.6.0 | Biblioteca conectada a OpenFoodFacts, Mis Alimentos y Mis Recetas funcionales
     </div>
 </div>
 
@@ -232,77 +235,52 @@
             </div>
         </div>
         <div class="ns-tabs">
-            <div class="ns-tab active">Mis alimentos</div>
-            <div class="ns-tab">Mis recetas</div>
-            <div class="ns-tab">Biblioteca</div>
+            <div class="ns-tab active" data-tab="mine" onclick="switchTab('mine')">Mis alimentos</div>
+            <div class="ns-tab" data-tab="recipes" onclick="switchTab('recipes')">Mis recetas</div>
+            <div class="ns-tab" data-tab="library" onclick="switchTab('library')">Biblioteca</div>
         </div>
     </div>
     
     <div class="modal-content" style="padding: 0;">
         <div class="ns-section-header">
-            <span>Resultados / Alimentos recientes</span>
+            <span id="search-section-title">Mis alimentos guardados</span>
             <span class="chevron">v</span>
         </div>
         
         <div id="reader" style="padding: 15px; display: none;"></div>
         
-        <div id="search-results" class="ns-food-list">
-            <div class="ns-food-item">
-                <div class="ns-checkbox"></div>
-                <div class="ns-item-info"><div class="ns-item-name">Cochinita Pibil</div><div class="ns-item-desc">Chata, 120 gr</div></div>
-                <div class="ns-item-stats"><div class="ns-item-cal">171</div><div class="ns-item-macros">C: <span class="ns-m-carb">4.3</span> P: <span class="ns-m-pro">23.6</span> G: <span class="ns-m-fat">6.4</span></div></div>
-            </div>
-            <div class="ns-food-item">
-                <div class="ns-checkbox"></div>
-                <div class="ns-item-info"><div class="ns-item-name">Tortillas</div><div class="ns-item-desc">maiz, 4 tortillas</div></div>
-                <div class="ns-item-stats"><div class="ns-item-cal">173</div><div class="ns-item-macros">C: <span class="ns-m-carb">37.3</span> P: <span class="ns-m-pro">4</span> G: <span class="ns-m-fat">2</span></div></div>
-            </div>
-            <div class="ns-food-item">
-                <div class="ns-checkbox"></div>
-                <div class="ns-item-info"><div class="ns-item-name">1</div><div class="ns-item-desc">Huevo, 4 huevo</div></div>
-                <div class="ns-item-stats"><div class="ns-item-cal">268</div><div class="ns-item-macros">C: <span class="ns-m-carb">4.4</span> P: <span class="ns-m-pro">25.6</span> G: <span class="ns-m-fat">16.4</span></div></div>
-            </div>
-            <div class="ns-food-item">
-                <div class="ns-checkbox"></div>
-                <div class="ns-item-info"><div class="ns-item-name">Leche</div><div class="ns-item-desc">Desnatada, 115 ml</div></div>
-                <div class="ns-item-stats"><div class="ns-item-cal">40</div><div class="ns-item-macros">C: <span class="ns-m-carb">5.6</span> P: <span class="ns-m-pro">3.7</span> G: <span class="ns-m-fat">0.3</span></div></div>
-            </div>
-            
-            <div class="ns-promo-banner">
-                <span class="ns-promo-icon">🏆</span> Mejor sin anuncios. Desbloquear Plus.
-            </div>
-        </div>
+        <div id="search-results" class="ns-food-list"></div>
     </div>
 </div>
 
 <div class="modal" id="custom-food-modal">
     <div class="modal-header-nav">
         <button onclick="document.getElementById('custom-food-modal').style.display='none'">&lt;</button>
-        <span>Alimento</span>
+        <span id="custom-food-modal-title">Alimento</span>
         <button onclick="saveCustomFood()">💾</button>
     </div>
     <div class="modal-content">
         <div class="form-section">
             <div class="form-row">
-                <label>Descripción</label>
+                <label id="cf-name-label">Descripción</label>
                 <input type="text" id="cf-name" placeholder="Ej. Receta Crujiente" required>
             </div>
-            <div class="form-row">
+            <div class="form-row" id="cf-brand-row">
                 <label>Marca</label>
                 <input type="text" id="cf-brand" placeholder="Ej. Sabritas">
             </div>
-            <div class="form-row">
+            <div class="form-row" id="cf-barcode-row">
                 <label>Código de barras</label>
                 <input type="text" id="cf-barcode" placeholder="Opcional">
             </div>
             <div class="form-row">
-                <label>Tamaño de porción</label>
+                <label id="cf-portion-label">Tamaño de porción</label>
                 <input type="number" id="cf-portion" placeholder="100" required>
-                <span class="input-suffix">g/ml</span>
+                <span class="input-suffix" id="cf-portion-suffix">g/ml</span>
             </div>
         </div>
 
-        <p class="form-hint">Consejo: Deja el campo de calorías vacío para que se calcule automáticamente a partir de los macronutrientes.</p>
+        <p class="form-hint" id="cf-hint">Consejo: Deja el campo de calorías vacío para que se calcule automáticamente a partir de los macronutrientes.</p>
 
         <div class="form-section">
             <div class="form-row" style="background: #232325; justify-content: center;">
@@ -392,14 +370,16 @@
 
 <script>
     let currentUser = localStorage.getItem('currentUser') || 'default';
-    let goals, entries, customFoods;
+    let goals, entries, customFoods, customRecipes;
     let currentMealTarget = 'desayuno';
+    let currentTab = 'mine'; // 'mine' | 'recipes' | 'library'
     let html5QrcodeScanner = null;
 
     function loadData() {
         goals = JSON.parse(localStorage.getItem(`macroGoals_${currentUser}`)) || { cal: 2000, pro: 150, car: 200, fat: 65 };
         entries = JSON.parse(localStorage.getItem(`macroEntries_${currentUser}`)) || [];
         customFoods = JSON.parse(localStorage.getItem(`customFoods_${currentUser}`)) || [];
+        customRecipes = JSON.parse(localStorage.getItem(`customRecipes_${currentUser}`)) || [];
         entries = entries.map(e => e.meal ? e : { ...e, meal: 'desayuno' });
     }
     
@@ -407,6 +387,7 @@
         localStorage.setItem(`macroGoals_${currentUser}`, JSON.stringify(goals));
         localStorage.setItem(`macroEntries_${currentUser}`, JSON.stringify(entries));
         localStorage.setItem(`customFoods_${currentUser}`, JSON.stringify(customFoods));
+        localStorage.setItem(`customRecipes_${currentUser}`, JSON.stringify(customRecipes));
     }
 
     loadData();
@@ -415,6 +396,8 @@
         currentMealTarget = meal;
         document.getElementById('search-title').textContent = `Añadir a ${meal.charAt(0).toUpperCase() + meal.slice(1)}`;
         document.getElementById('search-modal').style.display = 'block';
+        document.getElementById('search-input').value = '';
+        switchTab('mine');
         setTimeout(() => document.getElementById('search-input').focus(), 100);
     }
     function openCalc() { document.getElementById('calc-modal').style.display = 'block'; }
@@ -431,6 +414,19 @@
     }
     function openCustomFood(barcode = '') {
         document.getElementById('cf-barcode').value = barcode;
+
+        // Adapta el formulario según la pestaña activa (Alimento vs Receta)
+        const isRecipe = currentTab === 'recipes';
+        document.getElementById('custom-food-modal-title').textContent = isRecipe ? 'Receta' : 'Alimento';
+        document.getElementById('cf-name-label').textContent = isRecipe ? 'Nombre de la receta' : 'Descripción';
+        document.getElementById('cf-name').placeholder = isRecipe ? 'Ej. Pollo con arroz' : 'Ej. Receta Crujiente';
+        document.getElementById('cf-portion-label').textContent = isRecipe ? 'Tamaño de porción' : 'Tamaño de porción';
+        document.getElementById('cf-portion-suffix').textContent = isRecipe ? 'g/ml' : 'g/ml';
+        document.getElementById('cf-brand-row').style.display = isRecipe ? 'none' : 'flex';
+        document.getElementById('cf-hint').textContent = isRecipe
+            ? 'Ingresa el total de macros de toda la porción/receta que preparaste.'
+            : 'Consejo: Deja el campo de calorías vacío para que se calcule automáticamente a partir de los macronutrientes.';
+
         document.getElementById('custom-food-modal').style.display = 'block';
     }
     function closeModals() {
@@ -487,10 +483,11 @@
 
         if(!name || isNaN(portion)) return alert('Llena al menos el nombre y la porción.');
 
+        const isRecipe = currentTab === 'recipes';
         const factor = 100 / portion;
-        const newFood = {
-            id: 'custom_' + Date.now(),
-            product_name: brand ? `${name} - ${brand}` : name,
+        const newItem = {
+            id: (isRecipe ? 'recipe_' : 'custom_') + Date.now(),
+            product_name: (!isRecipe && brand) ? `${name} - ${brand}` : name,
             code: barcode,
             nutriments: {
                 'energy-kcal_100g': Math.round(cal * factor),
@@ -500,16 +497,26 @@
             }
         };
 
-        customFoods.push(newFood);
+        if (isRecipe) {
+            customRecipes.push(newItem);
+        } else {
+            customFoods.push(newItem);
+        }
         saveData();
-        alert('Alimento guardado localmente.');
+        alert(isRecipe ? 'Receta guardada.' : 'Alimento guardado localmente.');
         document.getElementById('custom-food-modal').style.display = 'none';
         
         ['cf-name','cf-brand','cf-barcode','cf-portion','cf-cal','cf-fat','cf-carb','cf-pro'].forEach(id => document.getElementById(id).value = '');
+
+        renderTabContent();
     }
 
     document.getElementById('search-input').addEventListener('keypress', function (e) {
         if (e.key === 'Enter') { e.preventDefault(); searchFood(); }
+    });
+    document.getElementById('search-input').addEventListener('input', function () {
+        // Búsqueda local instantánea para "Mis alimentos" y "Mis recetas"
+        if (currentTab !== 'library') renderTabContent();
     });
 
     async function fetchWithRetry(url, retries = 3) {
@@ -535,39 +542,93 @@
         }
     }
 
-    async function searchFood() {
+    // --- CAMBIO DE PESTAÑA (Mis alimentos / Mis recetas / Biblioteca) ---
+    function switchTab(tab) {
+        currentTab = tab;
+        document.querySelectorAll('.ns-tab').forEach(t => {
+            t.classList.toggle('active', t.dataset.tab === tab);
+        });
+
+        const titles = {
+            mine: 'Mis alimentos guardados',
+            recipes: 'Mis recetas',
+            library: 'Biblioteca de alimentos'
+        };
+        document.getElementById('search-section-title').textContent = titles[tab];
+
+        closeScanner();
+        renderTabContent();
+    }
+
+    // Decide qué mostrar según la pestaña activa y el texto de búsqueda actual
+    function renderTabContent() {
+        const query = document.getElementById('search-input').value.trim();
+        const container = document.getElementById('search-results');
+
+        if (currentTab === 'mine') {
+            renderLocalList(customFoods, query, container, 'Aún no tienes alimentos guardados.', 'Añadir alimento');
+        } else if (currentTab === 'recipes') {
+            renderLocalList(customRecipes, query, container, 'Aún no tienes recetas guardadas.', 'Crear receta');
+        } else if (currentTab === 'library') {
+            if (!query) {
+                container.innerHTML = '<div class="ns-empty-state"><p>Escribe el nombre de un alimento o escanea un código de barras para buscar en la biblioteca.</p></div>';
+            } else {
+                searchLibrary(query);
+            }
+        }
+    }
+
+    function renderLocalList(list, query, container, emptyMsg, emptyBtnLabel) {
+        const filtered = query
+            ? list.filter(f => f.product_name.toLowerCase().includes(query.toLowerCase()))
+            : list;
+
+        if (filtered.length === 0) {
+            container.innerHTML = `<div class="ns-empty-state"><p>${emptyMsg}</p><button class="btn-primary" onclick="openCustomFood()">+ ${emptyBtnLabel}</button></div>`;
+            return;
+        }
+        renderProducts([...filtered].reverse(), container);
+    }
+
+    // Búsqueda por texto: solo aplica a la pestaña Biblioteca (API OpenFoodFacts)
+    function searchFood() {
+        if (currentTab !== 'library') {
+            switchTab('library');
+            return;
+        }
         const query = document.getElementById('search-input').value.trim();
         if (!query) return;
-
         if (/^\d+$/.test(query)) { searchByBarcode(query); return; }
+        searchLibrary(query);
+    }
 
+    async function searchLibrary(query) {
         const container = document.getElementById('search-results');
-        container.innerHTML = '<div style="padding:20px; color:#8e8e93;">Buscando...</div>';
-
-        let localResults = customFoods.filter(f => f.product_name.toLowerCase().includes(query.toLowerCase()));
+        container.innerHTML = '<div style="padding:20px; color:#8e8e93;">Buscando en la biblioteca...</div>';
 
         try {
-            const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=10`;
+            const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=20`;
             const data = await fetchWithRetry(url);
-            
+
             container.innerHTML = '';
-            const allResults = [...localResults, ...(data && data.products ? data.products : [])];
-            
-            if (allResults.length === 0) {
-                container.innerHTML = '<div style="padding:20px; color:#8e8e93;"><p style="margin-bottom:10px;">No se encontró.</p><button class="btn-primary" onclick="openCustomFood()">Añadir Manualmente</button></div>';
+            const results = (data && data.products) ? data.products : [];
+
+            if (results.length === 0) {
+                container.innerHTML = '<div class="ns-empty-state"><p>No se encontró en la biblioteca.</p><button class="btn-primary" onclick="openCustomFood()">Añadir Manualmente</button></div>';
                 return;
             }
-            renderProducts(allResults, container);
+            renderProducts(results, container);
         } catch (error) {
-            container.innerHTML = `<div style="padding:20px; color:#8e8e93;">Error de red: Comprueba tu conexión. <button class="btn-secondary" onclick="searchFood()">Reintentar</button></div>`;
+            container.innerHTML = `<div class="ns-empty-state"><p>Error de red: Comprueba tu conexión.</p><button class="btn-secondary" onclick="searchLibrary('${query.replace(/'/g, "\\'")}')">Reintentar</button></div>`;
         }
     }
 
     async function searchByBarcode(barcode) {
+        if (currentTab !== 'library') switchTab('library');
         const container = document.getElementById('search-results');
         container.innerHTML = `<div style="padding:20px; color:#8e8e93;">Buscando código: ${barcode}...</div>`;
 
-        let localMatch = customFoods.find(f => f.code === barcode);
+        let localMatch = customFoods.find(f => f.code === barcode) || customRecipes.find(f => f.code === barcode);
         if(localMatch) {
             container.innerHTML = '';
             renderProducts([localMatch], container);
@@ -580,12 +641,12 @@
             container.innerHTML = '';
             
             if (!data || data.status !== 1) {
-                container.innerHTML = `<div style="padding:20px; color:#8e8e93;"><p style="margin-bottom:10px;">Producto no encontrado.</p><button class="btn-primary" onclick="openCustomFood('${barcode}')">Crear este alimento</button></div>`;
+                container.innerHTML = `<div class="ns-empty-state"><p>Producto no encontrado.</p><button class="btn-primary" onclick="openCustomFood('${barcode}')">Crear este alimento</button></div>`;
                 return;
             }
             renderProducts([data.product], container);
         } catch (error) {
-            container.innerHTML = `<div style="padding:20px; color:#8e8e93;">Error de red: Comprueba tu conexión. <button class="btn-secondary" onclick="searchByBarcode('${barcode}')">Reintentar</button></div>`;
+            container.innerHTML = `<div class="ns-empty-state"><p>Error de red: Comprueba tu conexión.</p><button class="btn-secondary" onclick="searchByBarcode('${barcode}')">Reintentar</button></div>`;
         }
     }
 
@@ -604,7 +665,6 @@
             
             const item = document.createElement('div');
             item.className = 'ns-food-item';
-            // Añade funcionalidad de agregar directamente 100g al tocar el checkbox (o en toda la caja si prefieres)
             item.innerHTML = `
                 <div class="ns-checkbox" onclick="addApiFood('${name.replace(/'/g, "\\'")}', ${cal}, ${pro}, ${car}, ${fat}, '${id}')"></div>
                 <div class="ns-item-info">
@@ -623,6 +683,13 @@
             `;
             container.appendChild(item);
         });
+
+        if (currentTab === 'library') {
+            const promo = document.createElement('div');
+            promo.className = 'ns-promo-banner';
+            promo.innerHTML = '<span class="ns-promo-icon">🏆</span> Mejor sin anuncios. Desbloquear Plus.';
+            container.appendChild(promo);
+        }
     }
 
     window.addApiFood = function(name, cal100, pro100, car100, fat100, id) {
@@ -640,14 +707,6 @@
             fat: Math.round(fat100 * multiplier)
         });
 
-        // Limpiar para la próxima vez
-        const container = document.getElementById('search-results');
-        container.innerHTML = `
-            <div class="ns-food-item"><div class="ns-checkbox"></div><div class="ns-item-info"><div class="ns-item-name">Cochinita Pibil</div><div class="ns-item-desc">Chata, 120 gr</div></div><div class="ns-item-stats"><div class="ns-item-cal">171</div><div class="ns-item-macros">C: <span class="ns-m-carb">4.3</span> P: <span class="ns-m-pro">23.6</span> G: <span class="ns-m-fat">6.4</span></div></div></div>
-            <div class="ns-promo-banner"><span class="ns-promo-icon">🏆</span> Mejor sin anuncios. Desbloquear Plus.</div>
-        `;
-        document.getElementById('search-input').value = '';
-        
         saveData();
         closeModals();
         updateUI();
@@ -655,6 +714,9 @@
     
     // --- LÓGICA DE ESCÁNER DE CÁMARA (COMPLETA) ---
     function toggleScanner() {
+        if (currentTab !== 'library') {
+            switchTab('library');
+        }
         const readerDiv = document.getElementById('reader');
         if (readerDiv.style.display === 'block') {
             closeScanner();
