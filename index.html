@@ -219,6 +219,26 @@
             width: 100% !important;
             height: 100% !important;
         }
+        
+        /* Animación de línea de escaneo visual */
+        .scan-line {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 3px;
+            background: #ff4b4b;
+            box-shadow: 0 0 15px 3px rgba(255, 75, 75, 0.6);
+            animation: scanAnim 2.5s ease-in-out infinite;
+            z-index: 20;
+            pointer-events: none;
+        }
+        @keyframes scanAnim {
+            0% { top: 15%; opacity: 0; }
+            10% { opacity: 1; }
+            50% { top: 85%; }
+            90% { opacity: 1; }
+            100% { top: 15%; opacity: 0; }
+        }
     </style>
 </head>
 <body>
@@ -288,7 +308,7 @@
     </div>
     
     <div class="footer-version">
-        v2.0.0 | Escaneo instantaneo y redireccion
+        v2.1.0 | Reconocimiento ultra-rapido sin restricciones
     </div>
 </div>
 
@@ -517,6 +537,7 @@
     </div>
     <div id="reader-container">
         <div id="reader"></div>
+        <div class="scan-line"></div>
     </div>
 </div>
 
@@ -1097,7 +1118,16 @@
         document.getElementById('scanner-modal').classList.add('open');
         
         if (!html5QrCode) {
-            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode = new Html5Qrcode("reader", {
+                formatsToSupport: [
+                    Html5QrcodeSupportedFormats.EAN_13,
+                    Html5QrcodeSupportedFormats.EAN_8,
+                    Html5QrcodeSupportedFormats.UPC_A,
+                    Html5QrcodeSupportedFormats.UPC_E,
+                    Html5QrcodeSupportedFormats.CODE_128,
+                    Html5QrcodeSupportedFormats.CODE_39
+                ]
+            });
         }
         
         Html5Qrcode.getCameras().then(devices => {
@@ -1105,8 +1135,8 @@
                 html5QrCode.start(
                     { facingMode: "environment" },
                     {
-                        fps: 30,
-                        qrbox: { width: 300, height: 150 }
+                        fps: 60,
+                        disableFlip: false
                     },
                     (decodedText, decodedResult) => {
                         closeScannerModal();
@@ -1114,7 +1144,6 @@
                         searchByBarcode(decodedText);
                     },
                     (errorMessage) => {
-                        
                     }
                 ).catch(err => {
                     closeScannerModal();
@@ -1136,7 +1165,7 @@
             html5QrCode.stop().then(() => {
                 html5QrCode.clear();
             }).catch(err => {
-                console.log("No se pudo detener el escáner de manera limpia", err);
+                console.log("No se pudo detener el escáner", err);
             });
         }
     }
