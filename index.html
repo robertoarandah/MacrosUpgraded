@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracker de Macros</title>
+    <style>
+        :root {
+            --bg: #f4f4f5;
+            --surface: #ffffff;
+            --primary: #2563eb;
+            --text: #18181b;
+            --text-muted: #71717a;
+            --border: #e4e4e7;
+            --radius: 8px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+        .card { background: var(--surface); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border); }
+        h2 { font-size: 1.2rem; margin-bottom: 15px; }
+        
+        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center; }
+        .stat-box { padding: 10px; background: var(--bg); border-radius: var(--radius); }
+        .stat-value { font-size: 1.5rem; font-weight: bold; margin-bottom: 5px; }
+        .stat-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; }
+        
+        .progress-bar { height: 6px; background: var(--border); border-radius: 3px; margin-top: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--primary); transition: width 0.3s ease; }
+        
+        .form-group { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        input { flex: 1; min-width: 80px; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 1rem; }
+        input[type="text"] { min-width: 100%; }
+        button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: var(--radius); font-size: 1rem; cursor: pointer; font-weight: bold; }
+        button:hover { opacity: 0.9; }
+
+        .food-list { list-style: none; }
+        .food-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+        .food-item:last-child { border-bottom: none; }
+        .food-name { font-weight: bold; }
+        .food-macros { font-size: 0.85rem; color: var(--text-muted); }
+        .delete-btn { color: #ef4444; cursor: pointer; border: none; background: none; font-size: 0.9rem; margin-left: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h2>Resumen Diario</h2>
+        <div class="summary-grid">
+            <div class="stat-box">
+                <div class="stat-value" id="cal-val">0</div>
+                <div class="stat-label">Kcal</div>
+                <div class="progress-bar"><div class="progress-fill" id="cal-bar" style="width: 0%"></div></div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="pro-val">0g</div>
+                <div class="stat-label">Prot</div>
+                <div class="progress-bar"><div class="progress-fill" id="pro-bar" style="width: 0%"></div></div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="car-val">0g</div>
+                <div class="stat-label">Carb</div>
+                <div class="progress-bar"><div class="progress-fill" id="car-bar" style="width: 0%"></div></div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="fat-val">0g</div>
+                <div class="stat-label">Grasa</div>
+                <div class="progress-bar"><div class="progress-fill" id="fat-bar" style="width: 0%"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Agregar Alimento</h2>
+        <form id="food-form">
+            <div class="form-group">
+                <input type="text" id="food-name" placeholder="Nombre del alimento" required>
+            </div>
+            <div class="form-group">
+                <input type="number" id="food-cal" placeholder="Kcal" required min="0">
+                <input type="number" id="food-pro" placeholder="Prot (g)" required min="0">
+                <input type="number" id="food-car" placeholder="Carb (g)" required min="0">
+                <input type="number" id="food-fat" placeholder="Grasa (g)" required min="0">
+            </div>
+            <button type="submit">Registrar</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Registro</h2>
+        <ul class="food-list" id="food-list">
+            <!-- Inyección dinámica mediante JS -->
+        </ul>
+    </div>
+</div>
+
+<script>
+    // Metas diarias (modificables según la lógica que desees implementar después)
+    const GOALS = { cal: 2000, pro: 150, car: 200, fat: 65 };
+    
+    // Inicialización del estado mediante LocalStorage
+    let entries = JSON.parse(localStorage.getItem('macroEntries')) || [];
+
+    const form = document.getElementById('food-form');
+    const listEl = document.getElementById('food-list');
+
+    function updateUI() {
+        // Reducción del array para obtener los sumatorios
+        const totals = entries.reduce((acc, curr) => ({
+            cal: acc.cal + curr.cal,
+            pro: acc.pro + curr.pro,
+            car: acc.car + curr.car,
+            fat: acc.fat + curr.fat
+        }), { cal: 0, pro: 0, car: 0, fat: 0 });
+
+        // Actualización del DOM (valores numéricos)
+        document.getElementById('cal-val').textContent = totals.cal;
+        document.getElementById('pro-val').textContent = totals.pro + 'g';
+        document.getElementById('car-val').textContent = totals.car + 'g';
+        document.getElementById('fat-val').textContent = totals.fat + 'g';
+
+        // Actualización de los anchos de las barras de progreso limitados al 100%
+        document.getElementById('cal-bar').style.width = Math.min((totals.cal / GOALS.cal) * 100, 100) + '%';
+        document.getElementById('pro-bar').style.width = Math.min((totals.pro / GOALS.pro) * 100, 100) + '%';
+        document.getElementById('car-bar').style.width = Math.min((totals.car / GOALS.car) * 100, 100) + '%';
+        document.getElementById('fat-bar').style.width = Math.min((totals.fat / GOALS.fat) * 100, 100) + '%';
+
+        // Renderizado de la lista
+        listEl.innerHTML = '';
+        entries.forEach((entry, index) => {
+            const li = document.createElement('li');
+            li.className = 'food-item';
+            li.innerHTML = `
+                <div>
+                    <div class="food-name">${entry.name}</div>
+                    <div class="food-macros">${entry.cal} kcal | P: ${entry.pro}g | C: ${entry.car}g | G: ${entry.fat}g</div>
+                </div>
+                <button class="delete-btn" onclick="deleteEntry(${index})">X</button>
+            `;
+            listEl.appendChild(li);
+        });
+
+        // Sincronización con LocalStorage
+        localStorage.setItem('macroEntries', JSON.stringify(entries));
+    }
+
+    // Manejador del formulario
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const newEntry = {
+            name: document.getElementById('food-name').value,
+            cal: parseInt(document.getElementById('food-cal').value),
+            pro: parseInt(document.getElementById('food-pro').value),
+            car: parseInt(document.getElementById('food-car').value),
+            fat: parseInt(document.getElementById('food-fat').value)
+        };
+
+        entries.push(newEntry);
+        form.reset();
+        document.getElementById('food-name').focus();
+        updateUI();
+    });
+
+    // Función global para permitir la ejecución desde el DOM dinámico
+    window.deleteEntry = function(index) {
+        entries.splice(index, 1);
+        updateUI();
+    };
+
+    // Render inicial
+    updateUI();
+</script>
+
+</body>
+</html>
