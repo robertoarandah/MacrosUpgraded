@@ -156,7 +156,7 @@
     </div>
     
     <div class="footer-version">
-        v1.2.0 | Último cambio: Integración de UI modo oscuro por comidas
+        v1.3.0 | Último cambio: Auto-envío en campo de búsqueda para escaners físicos (Enter key)
     </div>
 </div>
 
@@ -172,10 +172,10 @@
         <button class="close-modal" onclick="closeModals()">X</button>
     </div>
     <div style="display: flex; gap: 10px;">
-        <input type="text" id="search-input" placeholder="Nombre del producto...">
+        <input type="text" id="search-input" placeholder="Nombre o código de barras...">
         <button class="btn-primary" onclick="searchFood()" style="width: auto; margin: 0;">Buscar</button>
     </div>
-    <button class="btn-secondary" onclick="toggleScanner()">Escanear Código de Barras</button>
+    <button class="btn-secondary" onclick="toggleScanner()">Escanear Código (Cámara)</button>
     <div id="reader"></div>
     <div id="search-results" class="search-results"></div>
 </div>
@@ -221,13 +221,13 @@
     let currentMealTarget = 'desayuno';
     let html5QrcodeScanner = null;
 
-    // Adaptación de datos antiguos
     entries = entries.map(e => e.meal ? e : { ...e, meal: 'desayuno' });
 
     function openSearch(meal) {
         currentMealTarget = meal;
         document.getElementById('search-title').textContent = `Añadir a ${meal.charAt(0).toUpperCase() + meal.slice(1)}`;
         document.getElementById('search-modal').style.display = 'block';
+        setTimeout(() => document.getElementById('search-input').focus(), 100);
     }
 
     function openCalc() {
@@ -239,6 +239,14 @@
         document.getElementById('calc-modal').style.display = 'none';
         closeScanner();
     }
+
+    // Listener para enviar el formulario con "Enter" (Útil para escáneres físicos)
+    document.getElementById('search-input').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            searchFood();
+        }
+    });
 
     document.getElementById('calc-form').addEventListener('submit', (e) => {
         e.preventDefault();
@@ -265,8 +273,14 @@
     });
 
     async function searchFood() {
-        const query = document.getElementById('search-input').value;
+        const query = document.getElementById('search-input').value.trim();
         if (!query) return;
+
+        // Si el string contiene solo números, tratarlo directamente como un código de barras
+        if (/^\d+$/.test(query)) {
+            searchByBarcode(query);
+            return;
+        }
 
         const container = document.getElementById('search-results');
         container.innerHTML = 'Buscando...';
@@ -298,7 +312,7 @@
             const data = await res.json();
             container.innerHTML = '';
             if (data.status !== 1) {
-                container.innerHTML = 'Producto no encontrado.';
+                container.innerHTML = 'Producto no encontrado en la base de datos abierta.';
                 return;
             }
             renderProducts([data.product], container);
@@ -386,7 +400,6 @@
     function updateUI() {
         const total = calculateTotals();
         
-        // Top Summary Update
         document.getElementById('top-carb-text').textContent = `${total.car} / ${goals.car} g`;
         document.getElementById('top-pro-text').textContent = `${total.pro} / ${goals.pro} g`;
         document.getElementById('top-fat-text').textContent = `${total.fat} / ${goals.fat} g`;
@@ -396,10 +409,9 @@
         document.getElementById('top-pro-bar').style.width = Math.min((total.pro / goals.pro) * 100, 100) + '%';
         document.getElementById('top-fat-bar').style.width = Math.min((total.fat / goals.fat) * 100, 100) + '%';
 
-        // Meal Sections Update
         ['desayuno', 'almuerzo', 'cena'].forEach(meal => {
             const mealTotals = calculateTotals(meal);
-            const goalFraction = 3; // Estimación simple para metas por comida (tercios)
+            const goalFraction = 3;
 
             document.getElementById(`${meal}-carb`).textContent = `${mealTotals.car} / ${Math.round(goals.car/goalFraction)}`;
             document.getElementById(`${meal}-pro`).textContent = `${mealTotals.pro} / ${Math.round(goals.pro/goalFraction)}`;
