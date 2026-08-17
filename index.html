@@ -87,7 +87,7 @@
         .result-actions input { margin: 0; flex: 1; }
         .result-actions button { margin: 0; width: auto; padding: 10px 15px; }
 
-        /* Custom Food Form UI (iOS Settings Style) */
+        /* Custom Food Form UI */
         .form-section { background: var(--bg-card); border-radius: var(--radius); margin-bottom: 20px; overflow: hidden; }
         .form-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid var(--border); }
         .form-row:last-child { border-bottom: none; }
@@ -173,7 +173,7 @@
     </div>
     
     <div class="footer-version">
-        v1.4.0 | Creador manual de alimentos, manejo de errores de API y Sesiones
+        v1.4.1 | Estabilidad mejorada contra errores de red (CORS / Load failed)
     </div>
 </div>
 
@@ -321,7 +321,6 @@
 </div>
 
 <script>
-    // Variables y estado de Autenticación Local
     let currentUser = localStorage.getItem('currentUser') || 'default';
     let goals, entries, customFoods;
     let currentMealTarget = 'desayuno';
@@ -342,7 +341,6 @@
 
     loadData();
 
-    // UI Modals
     function openSearch(meal) {
         currentMealTarget = meal;
         document.getElementById('search-title').textContent = `Añadir a ${meal.charAt(0).toUpperCase() + meal.slice(1)}`;
@@ -370,7 +368,6 @@
         closeScanner();
     }
 
-    // Auth Logic
     function login() {
         const email = document.getElementById('auth-email').value.trim();
         if(email) {
@@ -389,7 +386,6 @@
         closeModals();
     }
 
-    // Metas Calculadora
     document.getElementById('calc-form').addEventListener('submit', (e) => {
         e.preventDefault();
         const sex = document.getElementById('calc-sex').value;
@@ -406,7 +402,6 @@
         saveData(); updateUI(); closeModals();
     });
 
-    // Custom Food Logic
     function saveCustomFood() {
         const name = document.getElementById('cf-name').value;
         const brand = document.getElementById('cf-brand').value;
@@ -417,13 +412,11 @@
         let car = parseFloat(document.getElementById('cf-carb').value) || 0;
         let fat = parseFloat(document.getElementById('cf-fat').value) || 0;
         
-        // Auto-calcular calorías si está vacío (Proteina*4 + Carbo*4 + Grasa*9)
         let calInput = document.getElementById('cf-cal').value;
         let cal = calInput ? parseFloat(calInput) : Math.round((pro * 4) + (car * 4) + (fat * 9));
 
         if(!name || isNaN(portion)) return alert('Llena al menos el nombre y la porción.');
 
-        // Normalizar a 100g para mantener formato API
         const factor = 100 / portion;
         const newFood = {
             id: 'custom_' + Date.now(),
@@ -442,14 +435,37 @@
         alert('Alimento guardado localmente.');
         document.getElementById('custom-food-modal').style.display = 'none';
         
-        // Limpiar form
         ['cf-name','cf-brand','cf-barcode','cf-portion','cf-cal','cf-fat','cf-carb','cf-pro'].forEach(id => document.getElementById(id).value = '');
     }
 
-    // Buscador
     document.getElementById('search-input').addEventListener('keypress', function (e) {
         if (e.key === 'Enter') { e.preventDefault(); searchFood(); }
     });
+
+    // Función robusta con reintentos y soporte de proxy para evitar "Load failed"
+    async function fetchWithRetry(url, retries = 3) {
+        for (let i = 0; i < retries; i++) {
+            try {
+                let res = await fetch(url);
+                if (res.ok) return await res.json();
+            } catch (err) {
+                if (i === retries - 1) {
+                    // Intento final con Proxy CORS alternativo si falla el directo
+                    try {
+                        let proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                        let resProxy = await fetch(proxyUrl);
+                        if (resProxy.ok) {
+                            let data = await resProxy.json();
+                            return JSON.parse(data.contents);
+                        }
+                    } catch (e) {
+                        throw err;
+                    }
+                    throw err;
+                }
+            }
+        }
+    }
 
     async function searchFood() {
         const query = document.getElementById('search-input').value.trim();
@@ -460,16 +476,14 @@
         const container = document.getElementById('search-results');
         container.innerHTML = 'Buscando...';
 
-        // Buscar en locales primero
         let localResults = customFoods.filter(f => f.product_name.toLowerCase().includes(query.toLowerCase()));
 
         try {
             const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=5`;
-            const res = await fetch(url);
-            const data = await res.json();
+            const data = await fetchWithRetry(url);
             
             container.innerHTML = '';
-            const allResults = [...localResults, ...(data.products || [])];
+            const allResults = [...localResults, ...(data && data.products ? data.products : [])];
             
             if (allResults.length === 0) {
                 container.innerHTML = '<p style="margin-bottom:10px;">No se encontró.</p><button class="btn-primary" onclick="openCustomFood()">Añadir Manualmente</button>';
@@ -477,7 +491,7 @@
             }
             renderProducts(allResults, container);
         } catch (error) {
-            container.innerHTML = `Error: ${error.message}`;
+            container.innerHTML = `Error de red: Comprueba tu conexión. <button class="btn-secondary" onclick="searchFood()">Reintentar</button>`;
         }
     }
 
@@ -485,7 +499,6 @@
         const container = document.getElementById('search-results');
         container.innerHTML = `Buscando código: ${barcode}...`;
 
-        // Revisar locales
         let localMatch = customFoods.find(f => f.code === barcode);
         if(localMatch) {
             container.innerHTML = '';
@@ -495,24 +508,22 @@
 
         try {
             const url = `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`;
-            const res = await fetch(url);
-            const data = await res.json();
+            const data = await fetchWithRetry(url);
             container.innerHTML = '';
             
-            if (data.status !== 1) {
+            if (!data || data.status !== 1) {
                 container.innerHTML = `<p style="margin-bottom:10px;">Producto no encontrado.</p><button class="btn-primary" onclick="openCustomFood('${barcode}')">Crear este alimento</button>`;
                 return;
             }
             renderProducts([data.product], container);
         } catch (error) {
-            container.innerHTML = `Error: ${error.message}`;
+            container.innerHTML = `Error de red: Comprueba tu conexión. <button class="btn-secondary" onclick="searchByBarcode('${barcode}')">Reintentar</button>`;
         }
     }
 
     function renderProducts(products, container) {
         products.forEach(p => {
             const name = p.product_name || 'Desconocido';
-            // Manejo seguro de nutriments en caso de que la API devuelva undefined (Ej. Tecate ICE)
             const nut = p.nutriments || {};
             const cal = nut['energy-kcal_100g'] || nut['energy-kcal'] || 0;
             const pro = nut.proteins_100g || nut.proteins || 0;
@@ -556,7 +567,6 @@
         updateUI();
     };
 
-    // Scanner
     function toggleScanner() {
         const readerDiv = document.getElementById('reader');
         if (readerDiv.style.display === 'none' || readerDiv.style.display === '') {
@@ -579,7 +589,6 @@
         if (html5QrcodeScanner) { html5QrcodeScanner.clear(); html5QrcodeScanner = null; }
     }
 
-    // UI Updates
     function calculateTotals(filterMeal = null) {
         const filtered = filterMeal ? entries.filter(e => e.meal === filterMeal) : entries;
         return filtered.reduce((acc, curr) => ({
