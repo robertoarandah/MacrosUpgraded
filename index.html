@@ -81,12 +81,6 @@
         .btn-primary { width: 100%; padding: 14px; background: var(--header-red); color: white; border: none; border-radius: var(--radius); font-weight: bold; font-size: 1.1rem; cursor: pointer; margin-top: 10px; }
         .btn-secondary { width: 100%; padding: 14px; background: var(--border); color: white; border: none; border-radius: var(--radius); font-weight: bold; cursor: pointer; margin-top: 10px; }
         
-        .search-results { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
-        .result-item { background: var(--bg-card); padding: 10px; border-radius: var(--radius); }
-        .result-actions { display: flex; gap: 10px; margin-top: 10px; }
-        .result-actions input { margin: 0; flex: 1; }
-        .result-actions button { margin: 0; width: auto; padding: 10px 15px; }
-
         /* Custom Food Form UI */
         .form-section { background: var(--bg-card); border-radius: var(--radius); margin-bottom: 20px; overflow: hidden; }
         .form-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid var(--border); }
@@ -106,6 +100,46 @@
         #reader { width: 100%; margin-top: 15px; display: none; }
         .footer-version { text-align: center; color: var(--text-muted); font-size: 0.75rem; padding: 20px 0; }
         .auth-status { text-align: center; color: var(--color-pro); margin-bottom: 10px; font-weight: bold; }
+
+        /* --- NUEVA UI DEL MODAL BUSCADOR --- */
+        #search-modal { padding: 0; background: #000000; }
+        .ns-header-block { background: var(--header-red); padding-top: 15px; }
+
+        .ns-top-nav { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; color: white; font-weight: 600; font-size: 1.1rem; }
+        .ns-top-nav button { background: none; border: none; color: white; font-size: 1.8rem; cursor: pointer; font-weight: 300; display: flex; align-items: center; }
+
+        .ns-search-bar-container { padding: 5px 20px 15px 20px; }
+        .ns-search-bar { background: #1c1c1e; border-radius: 12px; display: flex; align-items: center; padding: 8px 12px; gap: 8px; }
+        .ns-search-bar input { flex: 1; background: transparent; border: none; color: white; padding: 0; margin: 0; font-size: 1rem; }
+        .ns-search-bar input::placeholder { color: #8e8e93; }
+        .ns-search-bar input:focus { outline: none; }
+        .ns-icon { color: #8e8e93; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; }
+        .ns-barcode { color: white; font-size: 1.2rem; cursor: pointer; }
+
+        .ns-tabs { display: flex; padding: 0 20px; gap: 25px; }
+        .ns-tab { color: rgba(255,255,255,0.6); padding-bottom: 12px; font-size: 0.95rem; cursor: pointer; font-weight: 500; }
+        .ns-tab.active { color: white; border-bottom: 3px solid white; }
+
+        .ns-section-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #000; color: #fff; font-size: 0.9rem; border-bottom: 1px solid #1c1c1e; }
+        .ns-section-header .chevron { transform: rotate(180deg); display: inline-block; font-size: 0.8rem; color: #fff; }
+
+        .ns-food-list { padding-bottom: 20px; }
+        .ns-food-item { display: flex; align-items: center; padding: 12px 20px; border-bottom: 1px solid #1c1c1e; background: #151515; }
+        .ns-checkbox { width: 22px; height: 22px; border: 2px solid #3a3a3c; border-radius: 6px; margin-right: 15px; cursor: pointer; flex-shrink: 0; }
+
+        .ns-item-info { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+        .ns-item-name { color: #e5e5ea; font-size: 1rem; }
+        .ns-item-desc { color: #8e8e93; font-size: 0.8rem; }
+
+        .ns-item-stats { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+        .ns-item-cal { color: #4381f1; font-size: 1rem; font-weight: 500; }
+        .ns-item-macros { font-size: 0.75rem; color: #e5e5ea; }
+        .ns-m-carb { color: var(--color-carb); margin-right: 5px; }
+        .ns-m-pro { color: var(--color-pro); margin-right: 5px; }
+        .ns-m-fat { color: var(--color-fat); }
+
+        .ns-promo-banner { background: #1c1c1e; border-radius: 10px; margin: 15px 20px; padding: 15px; text-align: center; color: #e5e5ea; font-size: 0.9rem; display: flex; justify-content: center; align-items: center; gap: 10px; border: 1px solid #2c2c2e; }
+        .ns-promo-icon { color: #32d74b; font-size: 1.2rem; }
     </style>
 </head>
 <body>
@@ -173,7 +207,7 @@
     </div>
     
     <div class="footer-version">
-        v1.4.1 | Estabilidad mejorada contra errores de red (CORS / Load failed)
+        v1.5.0 | Funciones UI, Escáner activado y Nueva Interfaz de Búsqueda iOS implementada
     </div>
 </div>
 
@@ -183,26 +217,64 @@
     <div class="nav-item" onclick="openAuth()">👤</div>
 </nav>
 
-<!-- Modal Buscador -->
 <div class="modal" id="search-modal">
-    <div class="modal-header-nav">
-        <button onclick="closeModals()">&lt;</button>
-        <span id="search-title">Añadir alimento</span>
-        <button onclick="openCustomFood()">+</button>
-    </div>
-    <div class="modal-content">
-        <div style="display: flex; gap: 10px;">
-            <input type="text" id="search-input" placeholder="Nombre o código de barras...">
-            <button class="btn-primary" onclick="searchFood()" style="width: auto; margin: 0; padding: 0 15px;">Buscar</button>
+    <div class="ns-header-block">
+        <div class="ns-top-nav">
+            <button onclick="closeModals()">❮</button>
+            <span id="search-title">Buscar</span>
+            <button onclick="openCustomFood()">+</button>
         </div>
-        <button class="btn-secondary" onclick="toggleScanner()">Escanear Código (Cámara)</button>
-        <button class="btn-secondary" style="background: var(--bg-card); color: var(--color-pro);" onclick="openCustomFood()">Crear Alimento Manualmente</button>
-        <div id="reader"></div>
-        <div id="search-results" class="search-results"></div>
+        <div class="ns-search-bar-container">
+            <div class="ns-search-bar">
+                <span class="ns-icon" onclick="searchFood()">🔍</span>
+                <input type="text" id="search-input" placeholder="Buscar">
+                <span class="ns-barcode" onclick="toggleScanner()">[|||]</span>
+            </div>
+        </div>
+        <div class="ns-tabs">
+            <div class="ns-tab active">Mis alimentos</div>
+            <div class="ns-tab">Mis recetas</div>
+            <div class="ns-tab">Biblioteca</div>
+        </div>
+    </div>
+    
+    <div class="modal-content" style="padding: 0;">
+        <div class="ns-section-header">
+            <span>Resultados / Alimentos recientes</span>
+            <span class="chevron">v</span>
+        </div>
+        
+        <div id="reader" style="padding: 15px; display: none;"></div>
+        
+        <div id="search-results" class="ns-food-list">
+            <div class="ns-food-item">
+                <div class="ns-checkbox"></div>
+                <div class="ns-item-info"><div class="ns-item-name">Cochinita Pibil</div><div class="ns-item-desc">Chata, 120 gr</div></div>
+                <div class="ns-item-stats"><div class="ns-item-cal">171</div><div class="ns-item-macros">C: <span class="ns-m-carb">4.3</span> P: <span class="ns-m-pro">23.6</span> G: <span class="ns-m-fat">6.4</span></div></div>
+            </div>
+            <div class="ns-food-item">
+                <div class="ns-checkbox"></div>
+                <div class="ns-item-info"><div class="ns-item-name">Tortillas</div><div class="ns-item-desc">maiz, 4 tortillas</div></div>
+                <div class="ns-item-stats"><div class="ns-item-cal">173</div><div class="ns-item-macros">C: <span class="ns-m-carb">37.3</span> P: <span class="ns-m-pro">4</span> G: <span class="ns-m-fat">2</span></div></div>
+            </div>
+            <div class="ns-food-item">
+                <div class="ns-checkbox"></div>
+                <div class="ns-item-info"><div class="ns-item-name">1</div><div class="ns-item-desc">Huevo, 4 huevo</div></div>
+                <div class="ns-item-stats"><div class="ns-item-cal">268</div><div class="ns-item-macros">C: <span class="ns-m-carb">4.4</span> P: <span class="ns-m-pro">25.6</span> G: <span class="ns-m-fat">16.4</span></div></div>
+            </div>
+            <div class="ns-food-item">
+                <div class="ns-checkbox"></div>
+                <div class="ns-item-info"><div class="ns-item-name">Leche</div><div class="ns-item-desc">Desnatada, 115 ml</div></div>
+                <div class="ns-item-stats"><div class="ns-item-cal">40</div><div class="ns-item-macros">C: <span class="ns-m-carb">5.6</span> P: <span class="ns-m-pro">3.7</span> G: <span class="ns-m-fat">0.3</span></div></div>
+            </div>
+            
+            <div class="ns-promo-banner">
+                <span class="ns-promo-icon">🏆</span> Mejor sin anuncios. Desbloquear Plus.
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Modal Creación de Alimento -->
 <div class="modal" id="custom-food-modal">
     <div class="modal-header-nav">
         <button onclick="document.getElementById('custom-food-modal').style.display='none'">&lt;</button>
@@ -261,7 +333,6 @@
     </div>
 </div>
 
-<!-- Modal Auth (Login) -->
 <div class="modal" id="auth-modal">
     <div class="modal-header-nav">
         <button onclick="closeModals()">&lt;</button>
@@ -285,7 +356,6 @@
     </div>
 </div>
 
-<!-- Modal Calculadora -->
 <div class="modal" id="calc-modal">
     <div class="modal-header-nav">
         <button onclick="closeModals()">&lt;</button>
@@ -442,7 +512,6 @@
         if (e.key === 'Enter') { e.preventDefault(); searchFood(); }
     });
 
-    // Función robusta con reintentos y soporte de proxy para evitar "Load failed"
     async function fetchWithRetry(url, retries = 3) {
         for (let i = 0; i < retries; i++) {
             try {
@@ -450,7 +519,6 @@
                 if (res.ok) return await res.json();
             } catch (err) {
                 if (i === retries - 1) {
-                    // Intento final con Proxy CORS alternativo si falla el directo
                     try {
                         let proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
                         let resProxy = await fetch(proxyUrl);
@@ -474,30 +542,30 @@
         if (/^\d+$/.test(query)) { searchByBarcode(query); return; }
 
         const container = document.getElementById('search-results');
-        container.innerHTML = 'Buscando...';
+        container.innerHTML = '<div style="padding:20px; color:#8e8e93;">Buscando...</div>';
 
         let localResults = customFoods.filter(f => f.product_name.toLowerCase().includes(query.toLowerCase()));
 
         try {
-            const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=5`;
+            const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=10`;
             const data = await fetchWithRetry(url);
             
             container.innerHTML = '';
             const allResults = [...localResults, ...(data && data.products ? data.products : [])];
             
             if (allResults.length === 0) {
-                container.innerHTML = '<p style="margin-bottom:10px;">No se encontró.</p><button class="btn-primary" onclick="openCustomFood()">Añadir Manualmente</button>';
+                container.innerHTML = '<div style="padding:20px; color:#8e8e93;"><p style="margin-bottom:10px;">No se encontró.</p><button class="btn-primary" onclick="openCustomFood()">Añadir Manualmente</button></div>';
                 return;
             }
             renderProducts(allResults, container);
         } catch (error) {
-            container.innerHTML = `Error de red: Comprueba tu conexión. <button class="btn-secondary" onclick="searchFood()">Reintentar</button>`;
+            container.innerHTML = `<div style="padding:20px; color:#8e8e93;">Error de red: Comprueba tu conexión. <button class="btn-secondary" onclick="searchFood()">Reintentar</button></div>`;
         }
     }
 
     async function searchByBarcode(barcode) {
         const container = document.getElementById('search-results');
-        container.innerHTML = `Buscando código: ${barcode}...`;
+        container.innerHTML = `<div style="padding:20px; color:#8e8e93;">Buscando código: ${barcode}...</div>`;
 
         let localMatch = customFoods.find(f => f.code === barcode);
         if(localMatch) {
@@ -512,18 +580,21 @@
             container.innerHTML = '';
             
             if (!data || data.status !== 1) {
-                container.innerHTML = `<p style="margin-bottom:10px;">Producto no encontrado.</p><button class="btn-primary" onclick="openCustomFood('${barcode}')">Crear este alimento</button>`;
+                container.innerHTML = `<div style="padding:20px; color:#8e8e93;"><p style="margin-bottom:10px;">Producto no encontrado.</p><button class="btn-primary" onclick="openCustomFood('${barcode}')">Crear este alimento</button></div>`;
                 return;
             }
             renderProducts([data.product], container);
         } catch (error) {
-            container.innerHTML = `Error de red: Comprueba tu conexión. <button class="btn-secondary" onclick="searchByBarcode('${barcode}')">Reintentar</button>`;
+            container.innerHTML = `<div style="padding:20px; color:#8e8e93;">Error de red: Comprueba tu conexión. <button class="btn-secondary" onclick="searchByBarcode('${barcode}')">Reintentar</button></div>`;
         }
     }
 
+    // --- RENDER PRODUCTS CON LA NUEVA UI ---
     function renderProducts(products, container) {
+        container.innerHTML = '';
         products.forEach(p => {
             const name = p.product_name || 'Desconocido';
+            const brand = p.brands ? p.brands + ', ' : '';
             const nut = p.nutriments || {};
             const cal = nut['energy-kcal_100g'] || nut['energy-kcal'] || 0;
             const pro = nut.proteins_100g || nut.proteins || 0;
@@ -532,14 +603,23 @@
             const id = Math.random().toString(36).substring(2, 11);
             
             const item = document.createElement('div');
-            item.className = 'result-item';
+            item.className = 'ns-food-item';
+            // Añade funcionalidad de agregar directamente 100g al tocar el checkbox (o en toda la caja si prefieres)
             item.innerHTML = `
-                <div style="font-weight:bold; margin-bottom:5px;">${name}</div>
-                <div style="font-size:0.8rem; color:var(--text-muted);">100g: ${Math.round(cal)} kcal | P:${Math.round(pro)}g | C:${Math.round(car)}g | G:${Math.round(fat)}g</div>
-                <div class="result-actions">
-                    <input type="number" id="grams-${id}" placeholder="Gramos" value="100" min="1">
-                    <button class="btn-primary" onclick="addApiFood('${name.replace(/'/g, "\\'")}', ${cal}, ${pro}, ${car}, ${fat}, '${id}')">Añadir</button>
+                <div class="ns-checkbox" onclick="addApiFood('${name.replace(/'/g, "\\'")}', ${cal}, ${pro}, ${car}, ${fat}, '${id}')"></div>
+                <div class="ns-item-info">
+                    <div class="ns-item-name">${name}</div>
+                    <div class="ns-item-desc">${brand}100 g</div>
                 </div>
+                <div class="ns-item-stats">
+                    <div class="ns-item-cal">${Math.round(cal)}</div>
+                    <div class="ns-item-macros">
+                        C: <span class="ns-m-carb">${parseFloat(car).toFixed(1)}</span> 
+                        P: <span class="ns-m-pro">${parseFloat(pro).toFixed(1)}</span> 
+                        G: <span class="ns-m-fat">${parseFloat(fat).toFixed(1)}</span>
+                    </div>
+                </div>
+                <input type="hidden" id="grams-${id}" value="100">
             `;
             container.appendChild(item);
         });
@@ -560,78 +640,54 @@
             fat: Math.round(fat100 * multiplier)
         });
 
-        document.getElementById('search-results').innerHTML = '';
+        // Limpiar para la próxima vez
+        const container = document.getElementById('search-results');
+        container.innerHTML = `
+            <div class="ns-food-item"><div class="ns-checkbox"></div><div class="ns-item-info"><div class="ns-item-name">Cochinita Pibil</div><div class="ns-item-desc">Chata, 120 gr</div></div><div class="ns-item-stats"><div class="ns-item-cal">171</div><div class="ns-item-macros">C: <span class="ns-m-carb">4.3</span> P: <span class="ns-m-pro">23.6</span> G: <span class="ns-m-fat">6.4</span></div></div></div>
+            <div class="ns-promo-banner"><span class="ns-promo-icon">🏆</span> Mejor sin anuncios. Desbloquear Plus.</div>
+        `;
         document.getElementById('search-input').value = '';
+        
         saveData();
         closeModals();
         updateUI();
     };
-
+    
+    // --- LÓGICA DE ESCÁNER DE CÁMARA (COMPLETA) ---
     function toggleScanner() {
         const readerDiv = document.getElementById('reader');
-        if (readerDiv.style.display === 'none' || readerDiv.style.display === '') {
+        if (readerDiv.style.display === 'block') {
+            closeScanner();
+        } else {
             readerDiv.style.display = 'block';
             if (!html5QrcodeScanner) {
-                html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
-                html5QrcodeScanner.render((decodedText) => {
-                    closeScanner();
-                    document.getElementById('search-input').value = decodedText;
-                    searchByBarcode(decodedText);
-                }, () => {});
+                html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 250, height: 250 } });
+                html5QrcodeScanner.render(onScanSuccess, onScanFailure);
             }
-        } else {
-            closeScanner();
         }
     }
+
+    function onScanSuccess(decodedText, decodedResult) {
+        closeScanner();
+        document.getElementById('search-input').value = decodedText;
+        searchByBarcode(decodedText);
+    }
+
+    function onScanFailure(error) {
+        // Fallos de lectura silenciosos por frame, se ignora intencionalmente
+    }
+
     function closeScanner() {
         const readerDiv = document.getElementById('reader');
-        readerDiv.style.display = 'none';
-        if (html5QrcodeScanner) { html5QrcodeScanner.clear(); html5QrcodeScanner = null; }
-    }
-
-    function calculateTotals(filterMeal = null) {
-        const filtered = filterMeal ? entries.filter(e => e.meal === filterMeal) : entries;
-        return filtered.reduce((acc, curr) => ({
-            cal: acc.cal + curr.cal, pro: acc.pro + curr.pro, car: acc.car + curr.car, fat: acc.fat + curr.fat
-        }), { cal: 0, pro: 0, car: 0, fat: 0 });
-    }
-
-    function updateUI() {
-        const total = calculateTotals();
-        
-        document.getElementById('top-carb-text').textContent = `${total.car} / ${goals.car} g`;
-        document.getElementById('top-pro-text').textContent = `${total.pro} / ${goals.pro} g`;
-        document.getElementById('top-fat-text').textContent = `${total.fat} / ${goals.fat} g`;
-        document.getElementById('top-cal-text').textContent = `${total.cal} / ${goals.cal} kcal`;
-
-        document.getElementById('top-carb-bar').style.width = Math.min((total.car / goals.car) * 100, 100) + '%';
-        document.getElementById('top-pro-bar').style.width = Math.min((total.pro / goals.pro) * 100, 100) + '%';
-        document.getElementById('top-fat-bar').style.width = Math.min((total.fat / goals.fat) * 100, 100) + '%';
-
-        ['desayuno', 'almuerzo', 'cena'].forEach(meal => {
-            const mealTotals = calculateTotals(meal);
-            const goalFraction = 3;
-
-            document.getElementById(`${meal}-carb`).textContent = `${mealTotals.car} / ${Math.round(goals.car/goalFraction)}`;
-            document.getElementById(`${meal}-pro`).textContent = `${mealTotals.pro} / ${Math.round(goals.pro/goalFraction)}`;
-            document.getElementById(`${meal}-fat`).textContent = `${mealTotals.fat} / ${Math.round(goals.fat/goalFraction)}`;
-            document.getElementById(`${meal}-cal`).textContent = `${mealTotals.cal} / ${Math.round(goals.cal/goalFraction)}`;
-
-            const listEl = document.getElementById(`list-${meal}`);
-            listEl.innerHTML = '';
-            entries.filter(e => e.meal === meal).forEach(entry => {
-                const li = document.createElement('li');
-                li.className = 'food-item';
-                li.innerHTML = `
-                    <div style="flex:1;">
-                        <div>${entry.name}</div>
-                        <div class="food-macros-text">${entry.cal} kcal | P: ${entry.pro}g | C: ${entry.car}g | G: ${entry.fat}g</div>
-                    </div>
-                    <button class="delete-btn" onclick="deleteEntry(${entry.id})">X</button>
-                `;
-                listEl.appendChild(li);
-            });
-        });
+        if (readerDiv) readerDiv.style.display = 'none';
+        if (html5QrcodeScanner) {
+            try {
+                html5QrcodeScanner.clear();
+                html5QrcodeScanner = null;
+            } catch (error) {
+                console.error("Error al detener el escáner:", error);
+            }
+        }
     }
 
     window.deleteEntry = function(id) {
@@ -640,8 +696,58 @@
         updateUI();
     };
 
+    function updateUI() {
+        const meals = ['desayuno', 'almuerzo', 'cena'];
+        let totals = { cal: 0, pro: 0, car: 0, fat: 0 };
+        
+        meals.forEach(meal => {
+            const mealEntries = entries.filter(e => e.meal === meal);
+            const list = document.getElementById(`list-${meal}`);
+            list.innerHTML = '';
+            
+            let mCal = 0, mPro = 0, mCar = 0, mFat = 0;
+            
+            mealEntries.forEach(e => {
+                mCal += e.cal; mPro += e.pro; mCar += e.car; mFat += e.fat;
+                
+                const li = document.createElement('li');
+                li.className = 'food-item';
+                li.innerHTML = `
+                    <div style="flex: 1;">
+                        <div style="font-weight: 500;">${e.name}</div>
+                        <div class="food-macros-text">${e.cal} kcal | P: ${e.pro}g | C: ${e.car}g | G: ${e.fat}g</div>
+                    </div>
+                    <button class="delete-btn" onclick="deleteEntry(${e.id})">✕</button>
+                `;
+                list.appendChild(li);
+            });
+            
+            document.getElementById(`${meal}-cal`).textContent = mCal;
+            document.getElementById(`${meal}-carb`).textContent = mCar + 'g';
+            document.getElementById(`${meal}-pro`).textContent = mPro + 'g';
+            document.getElementById(`${meal}-fat`).textContent = mFat + 'g';
+            
+            totals.cal += mCal; totals.pro += mPro; totals.car += mCar; totals.fat += mFat;
+        });
+        
+        // Resumen superior
+        document.getElementById('top-cal-text').textContent = `${totals.cal} / ${goals.cal} kcal`;
+        document.getElementById('top-carb-text').textContent = `${totals.car} / ${goals.car} g`;
+        document.getElementById('top-pro-text').textContent = `${totals.pro} / ${goals.pro} g`;
+        document.getElementById('top-fat-text').textContent = `${totals.fat} / ${goals.fat} g`;
+        
+        // Barras de progreso
+        const pCarb = Math.min(100, (totals.car / (goals.car || 1)) * 100);
+        const pPro = Math.min(100, (totals.pro / (goals.pro || 1)) * 100);
+        const pFat = Math.min(100, (totals.fat / (goals.fat || 1)) * 100);
+        
+        document.getElementById('top-carb-bar').style.width = pCarb + '%';
+        document.getElementById('top-pro-bar').style.width = pPro + '%';
+        document.getElementById('top-fat-bar').style.width = pFat + '%';
+    }
+
+    // Inicializar la Interfaz Gráfica con los datos almacenados
     updateUI();
 </script>
-
 </body>
 </html>
