@@ -255,7 +255,7 @@
     </div>
     
     <div class="footer-version">
-        v1.7.0 | Animaciones en modales, lista de alimentos, cantidad y confirmaciones
+        v1.7.1 | Los alimentos usados desde Biblioteca ahora se guardan en Mis Alimentos
     </div>
 </div>
 
@@ -781,8 +781,9 @@
             item.style.cursor = 'pointer';
             item.style.animationDelay = `${Math.min(idx, 12) * 35}ms`;
             const openQty = () => {
+                const sourceTab = currentTab;
                 item.classList.add('ns-item-tap');
-                setTimeout(() => openQuantityModal(name, cal, pro, car, fat), 130);
+                setTimeout(() => openQuantityModal(name, cal, pro, car, fat, sourceTab), 130);
             };
             item.innerHTML = `
                 <div class="ns-checkbox"></div>
@@ -814,8 +815,8 @@
     // --- MODAL DE CANTIDAD (gramaje al seleccionar un alimento) ---
     let pendingFood = null; // { name, cal100, pro100, car100, fat100 }
 
-    function openQuantityModal(name, cal100, pro100, car100, fat100) {
-        pendingFood = { name, cal100, pro100, car100, fat100 };
+    function openQuantityModal(name, cal100, pro100, car100, fat100, sourceTab) {
+        pendingFood = { name, cal100, pro100, car100, fat100, sourceTab: sourceTab || currentTab };
 
         document.getElementById('qty-food-name').textContent = name;
         document.getElementById('qty-food-base').textContent =
@@ -879,12 +880,34 @@
         entries.push(newEntry);
         justAddedEntryId = newEntry.id;
 
+        // Guarda el alimento en "Mis alimentos" cuando viene de la Biblioteca,
+        // para que quede disponible la próxima vez sin volver a buscarlo.
+        let savedToMine = false;
+        if (pendingFood.sourceTab === 'library') {
+            const alreadySaved = customFoods.some(f => f.product_name === pendingFood.name);
+            if (!alreadySaved) {
+                customFoods.push({
+                    id: 'used_' + Date.now(),
+                    product_name: pendingFood.name,
+                    code: '',
+                    nutriments: {
+                        'energy-kcal_100g': Math.round(pendingFood.cal100),
+                        'proteins_100g': pendingFood.pro100,
+                        'carbohydrates_100g': pendingFood.car100,
+                        'fat_100g': pendingFood.fat100
+                    }
+                });
+                savedToMine = true;
+            }
+        }
+
         pendingFood = null;
         saveData();
         closeModalAnim('quantity-modal');
         closeModals();
         updateUI();
-        showToast(`✓ Añadido a ${currentMealTarget.charAt(0).toUpperCase() + currentMealTarget.slice(1)}`);
+        const mealLabel = currentMealTarget.charAt(0).toUpperCase() + currentMealTarget.slice(1);
+        showToast(savedToMine ? `✓ Añadido a ${mealLabel} y guardado en Mis alimentos` : `✓ Añadido a ${mealLabel}`);
     }
     
     // --- LÓGICA DE ESCÁNER DE CÁMARA (COMPLETA) ---
