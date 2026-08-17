@@ -141,6 +141,19 @@
         .ns-empty-state { padding: 40px 20px; text-align: center; color: #8e8e93; }
         .ns-empty-state p { margin-bottom: 15px; font-size: 0.9rem; }
 
+        /* Modal de cantidad */
+        .qty-modal-content { padding: 25px 20px; }
+        .qty-food-name { font-size: 1.15rem; font-weight: bold; text-align: center; margin-bottom: 4px; }
+        .qty-food-base { font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-bottom: 20px; }
+        .qty-input-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .qty-input-row input { text-align: center; font-size: 1.3rem; font-weight: bold; margin-bottom: 0; }
+        .qty-quick-amounts { display: flex; gap: 8px; margin-bottom: 20px; }
+        .qty-quick-btn { flex: 1; padding: 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); color: white; font-size: 0.8rem; cursor: pointer; }
+        .qty-quick-btn.active { background: var(--header-red); border-color: var(--header-red); }
+        .qty-preview { background: var(--bg-card); border-radius: var(--radius); padding: 15px; display: flex; justify-content: space-around; text-align: center; margin-bottom: 10px; }
+        .qty-preview-col { display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; font-weight: bold; }
+        .qty-preview-col span:last-child { font-size: 0.7rem; color: var(--text-muted); font-weight: normal; }
+
         .ns-promo-banner { background: #1c1c1e; border-radius: 10px; margin: 15px 20px; padding: 15px; text-align: center; color: #e5e5ea; font-size: 0.9rem; display: flex; justify-content: center; align-items: center; gap: 10px; border: 1px solid #2c2c2e; }
         .ns-promo-icon { color: #32d74b; font-size: 1.2rem; }
     </style>
@@ -308,6 +321,39 @@
             </div>
         </div>
         <button class="btn-primary" onclick="saveCustomFood()">Guardar</button>
+    </div>
+</div>
+
+<div class="modal" id="quantity-modal">
+    <div class="modal-header-nav">
+        <button onclick="document.getElementById('quantity-modal').style.display='none'">&lt;</button>
+        <span>Cantidad</span>
+        <span></span>
+    </div>
+    <div class="qty-modal-content">
+        <div class="qty-food-name" id="qty-food-name">Alimento</div>
+        <div class="qty-food-base" id="qty-food-base">por 100 g</div>
+
+        <div class="qty-input-row">
+            <input type="number" id="qty-grams" value="100" min="1" oninput="updateQtyPreview()">
+            <span class="input-suffix" style="margin: 0;">g</span>
+        </div>
+
+        <div class="qty-quick-amounts">
+            <button type="button" class="qty-quick-btn" onclick="setQtyGrams(50)">50 g</button>
+            <button type="button" class="qty-quick-btn" onclick="setQtyGrams(100)">100 g</button>
+            <button type="button" class="qty-quick-btn" onclick="setQtyGrams(150)">150 g</button>
+            <button type="button" class="qty-quick-btn" onclick="setQtyGrams(200)">200 g</button>
+        </div>
+
+        <div class="qty-preview">
+            <div class="qty-preview-col"><span id="qty-prev-cal">0</span><span>kcal</span></div>
+            <div class="qty-preview-col"><span id="qty-prev-car">0 g</span><span>Carbs</span></div>
+            <div class="qty-preview-col"><span id="qty-prev-pro">0 g</span><span>Proteína</span></div>
+            <div class="qty-preview-col"><span id="qty-prev-fat">0 g</span><span>Grasa</span></div>
+        </div>
+
+        <button class="btn-primary" onclick="confirmAddFood()">Agregar</button>
     </div>
 </div>
 
@@ -665,8 +711,10 @@
             
             const item = document.createElement('div');
             item.className = 'ns-food-item';
+            item.style.cursor = 'pointer';
+            const openQty = () => openQuantityModal(name, cal, pro, car, fat);
             item.innerHTML = `
-                <div class="ns-checkbox" onclick="addApiFood('${name.replace(/'/g, "\\'")}', ${cal}, ${pro}, ${car}, ${fat}, '${id}')"></div>
+                <div class="ns-checkbox"></div>
                 <div class="ns-item-info">
                     <div class="ns-item-name">${name}</div>
                     <div class="ns-item-desc">${brand}100 g</div>
@@ -679,8 +727,8 @@
                         G: <span class="ns-m-fat">${parseFloat(fat).toFixed(1)}</span>
                     </div>
                 </div>
-                <input type="hidden" id="grams-${id}" value="100">
             `;
+            item.addEventListener('click', openQty);
             container.appendChild(item);
         });
 
@@ -692,25 +740,69 @@
         }
     }
 
-    window.addApiFood = function(name, cal100, pro100, car100, fat100, id) {
-        const grams = parseFloat(document.getElementById(`grams-${id}`).value);
-        if (isNaN(grams) || grams <= 0) return;
+    // --- MODAL DE CANTIDAD (gramaje al seleccionar un alimento) ---
+    let pendingFood = null; // { name, cal100, pro100, car100, fat100 }
+
+    function openQuantityModal(name, cal100, pro100, car100, fat100) {
+        pendingFood = { name, cal100, pro100, car100, fat100 };
+
+        document.getElementById('qty-food-name').textContent = name;
+        document.getElementById('qty-food-base').textContent =
+            `${Math.round(cal100)} kcal por 100 g`;
+        document.getElementById('qty-grams').value = 100;
+
+        document.querySelectorAll('.qty-quick-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.qty-quick-btn')[1].classList.add('active'); // 100g por defecto
+
+        updateQtyPreview();
+        document.getElementById('quantity-modal').style.display = 'block';
+    }
+
+    function setQtyGrams(g) {
+        document.getElementById('qty-grams').value = g;
+        document.querySelectorAll('.qty-quick-btn').forEach(b => {
+            b.classList.toggle('active', parseInt(b.textContent) === g);
+        });
+        updateQtyPreview();
+    }
+
+    function updateQtyPreview() {
+        if (!pendingFood) return;
+        const grams = parseFloat(document.getElementById('qty-grams').value) || 0;
+        const m = grams / 100;
+
+        document.querySelectorAll('.qty-quick-btn').forEach(b => {
+            b.classList.toggle('active', parseInt(b.textContent) === grams);
+        });
+
+        document.getElementById('qty-prev-cal').textContent = Math.round(pendingFood.cal100 * m);
+        document.getElementById('qty-prev-car').textContent = (pendingFood.car100 * m).toFixed(1) + ' g';
+        document.getElementById('qty-prev-pro').textContent = (pendingFood.pro100 * m).toFixed(1) + ' g';
+        document.getElementById('qty-prev-fat').textContent = (pendingFood.fat100 * m).toFixed(1) + ' g';
+    }
+
+    function confirmAddFood() {
+        if (!pendingFood) return;
+        const grams = parseFloat(document.getElementById('qty-grams').value);
+        if (isNaN(grams) || grams <= 0) return alert('Ingresa una cantidad válida.');
 
         const multiplier = grams / 100;
         entries.push({
             id: Date.now(),
             meal: currentMealTarget,
-            name: `${name} (${grams}g)`,
-            cal: Math.round(cal100 * multiplier),
-            pro: Math.round(pro100 * multiplier),
-            car: Math.round(car100 * multiplier),
-            fat: Math.round(fat100 * multiplier)
+            name: `${pendingFood.name} (${grams}g)`,
+            cal: Math.round(pendingFood.cal100 * multiplier),
+            pro: Math.round(pendingFood.pro100 * multiplier),
+            car: Math.round(pendingFood.car100 * multiplier),
+            fat: Math.round(pendingFood.fat100 * multiplier)
         });
 
+        pendingFood = null;
         saveData();
+        document.getElementById('quantity-modal').style.display = 'none';
         closeModals();
         updateUI();
-    };
+    }
     
     // --- LÓGICA DE ESCÁNER DE CÁMARA (COMPLETA) ---
     function toggleScanner() {
