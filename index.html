@@ -21,11 +21,9 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         body { background: var(--bg-main); color: var(--text-light); padding-bottom: 70px; }
         
-        /* Header */
         .app-header { background: var(--header-red); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; font-weight: bold; padding-top: max(15px, env(safe-area-inset-top)); }
         .app-header button { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; gap: 5px; }
         
-        /* Top Macros Summary */
         .top-summary { background: var(--bg-card); padding: 15px 20px; border-bottom: 1px solid var(--border); }
         .macro-headers { display: flex; justify-content: space-between; text-align: center; margin-bottom: 10px; font-size: 0.85rem; font-weight: 500; }
         .mh-carb { color: var(--color-carb); flex: 1; }
@@ -46,7 +44,6 @@
         
         .cal-summary { text-align: center; color: var(--color-pro); font-size: 0.85rem; font-weight: bold; }
 
-        /* Meal Cards */
         .container { padding: 15px; display: flex; flex-direction: column; gap: 15px; }
         .meal-card { background: var(--bg-card); border-radius: var(--radius); padding: 15px; }
         .meal-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1rem; margin-bottom: 15px; }
@@ -74,13 +71,11 @@
         @keyframes entrySlideOut { to { opacity: 0; transform: translateX(40px) scale(0.96); max-height: 0; padding-top: 0; padding-bottom: 0; margin: 0; } }
         @keyframes entryHighlight { 0% { background: rgba(255,75,75,0.16); } 100% { background: transparent; } }
         
-        /* Bottom Nav */
         .bottom-nav { position: fixed; bottom: 0; width: 100%; background: var(--bg-card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 15px 0; z-index: 10; padding-bottom: max(15px, env(safe-area-inset-bottom)); }
         .nav-item { color: var(--text-muted); cursor: pointer; font-size: 1.2rem; font-weight: bold; transition: color 0.2s ease, transform 0.15s ease; }
         .nav-item.active { color: var(--header-red); }
         .nav-item:active { transform: scale(0.92); }
 
-        /* Modals Generic */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); z-index: 20; overflow-y: auto; opacity: 0; transform: translateY(2%); transition: opacity 0.22s ease, transform 0.28s cubic-bezier(.22,1,.36,1); }
         .modal.modal-visible { opacity: 1; transform: translateY(0); }
         .modal-content { padding: 20px; }
@@ -95,7 +90,6 @@
         .btn-secondary { width: 100%; padding: 14px; background: var(--border); color: white; border: none; border-radius: var(--radius); font-weight: bold; cursor: pointer; margin-top: 10px; transition: transform 0.15s ease, opacity 0.15s ease; }
         .btn-secondary:active { transform: scale(0.97); opacity: 0.85; }
         
-        /* Custom Food Form UI */
         .form-section { background: var(--bg-card); border-radius: var(--radius); margin-bottom: 20px; overflow: hidden; }
         .form-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid var(--border); }
         .form-row:last-child { border-bottom: none; }
@@ -114,7 +108,6 @@
         .footer-version { text-align: center; color: var(--text-muted); font-size: 0.75rem; padding: 20px 0; }
         .auth-status { text-align: center; color: var(--color-pro); margin-bottom: 10px; font-weight: bold; }
 
-        /* UI DEL MODAL BUSCADOR */
         #search-modal { padding: 0; background: #000000; }
         .ns-header-block { background: var(--header-red); padding-top: max(15px, env(safe-area-inset-top)); }
 
@@ -163,7 +156,6 @@
         .ns-empty-state { padding: 40px 20px; text-align: center; color: #8e8e93; }
         .ns-empty-state p { margin-bottom: 15px; font-size: 0.9rem; }
 
-        /* Modal de cantidad */
         .qty-modal-content { padding: 25px 20px; }
         .qty-food-name { font-size: 1.15rem; font-weight: bold; text-align: center; margin-bottom: 4px; }
         .qty-food-base { font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-bottom: 20px; }
@@ -178,11 +170,9 @@
         .qty-preview-col span:last-child { font-size: 0.7rem; color: var(--text-muted); font-weight: normal; }
         .qty-preview-col span.qty-pulse { animation: qtyPulse 0.32s ease; }
 
-        /* Toast de confirmación */
         .app-toast { position: fixed; left: 50%; bottom: 90px; transform: translate(-50%, 16px); background: #2c2c2e; color: white; padding: 12px 22px; border-radius: 999px; font-size: 0.85rem; font-weight: 500; opacity: 0; pointer-events: none; z-index: 999999; box-shadow: 0 8px 24px rgba(0,0,0,0.45); transition: transform 0.3s cubic-bezier(.22,1,.36,1), opacity 0.3s ease; display: flex; align-items: center; gap: 8px; max-width: 85vw; text-align: center; }
         .app-toast.show { transform: translate(-50%, 0); opacity: 1; }
 
-        /* ESTILOS DEL NUEVO ESCÁNER PANTALLA COMPLETA */
         #scanner-modal {
             display: none;
             position: fixed;
@@ -221,7 +211,6 @@
             background: #000;
             overflow: hidden;
         }
-        /* Contenedor interno inyectado por html5-qrcode */
         #reader {
             width: 100%; height: 100%; border: none !important;
         }
@@ -299,23 +288,21 @@
     </div>
     
     <div class="footer-version">
-        v1.9.0 | Escáner en pantalla completa
+        v2.0.0 | Escaneo instantaneo y redireccion
     </div>
 </div>
 
 <nav class="bottom-nav">
     <div class="nav-item active">Diario</div>
     <div class="nav-item" onclick="openCalc()">Metas</div>
-    <div class="nav-item" onclick="openAuth()">👤</div>
+    <div class="nav-item" onclick="openAuth()">Perfil</div>
 </nav>
-
-<!-- MODALES -->
 
 <div class="modal" id="custom-food-modal">
     <div class="modal-header-nav">
         <button onclick="closeModalAnim('custom-food-modal')">&lt;</button>
         <span id="custom-food-modal-title">Alimento Manual</span>
-        <button onclick="saveCustomFood()">💾</button>
+        <button onclick="saveCustomFood()">Guardar</button>
     </div>
     <div class="modal-content">
         <div class="form-section">
@@ -373,7 +360,7 @@
     <div class="modal-header-nav">
         <button onclick="closeModalAnim('recipe-builder-modal')">&lt;</button>
         <span>Crear Receta</span>
-        <button onclick="saveRecipe()">💾</button>
+        <button onclick="saveRecipe()">Guardar</button>
     </div>
     <div class="modal-content">
         <div class="form-section">
@@ -413,7 +400,7 @@
         </div>
         <div class="ns-search-bar-container">
             <div class="ns-search-bar">
-                <span class="ns-icon" onclick="searchFood()">🔍</span>
+                <span class="ns-icon" onclick="searchFood()">O</span>
                 <input type="text" id="search-input" placeholder="Buscar">
                 <span class="ns-barcode" onclick="toggleScanner()">[|||]</span>
             </div>
@@ -482,7 +469,7 @@
             <p class="form-hint">Los datos se guardarán bajo este perfil en tu dispositivo.</p>
         </div>
         <div id="auth-logged-in" style="display: none; text-align: center;">
-            <div style="font-size: 3rem; margin-bottom: 10px;">👤</div>
+            <div style="font-size: 3rem; margin-bottom: 10px;">Perfil</div>
             <h2 id="auth-user-display" style="margin-bottom: 20px;">Usuario</h2>
             <p class="form-hint">Tus macros y alimentos personalizados están vinculados a esta cuenta de forma local.</p>
             <button class="btn-secondary" onclick="logout()">Cerrar Sesión</button>
@@ -524,7 +511,6 @@
     </div>
 </div>
 
-<!-- NUEVO CONTENEDOR PANTALLA COMPLETA PARA ESCÁNER -->
 <div id="scanner-modal">
     <div class="scanner-header">
         <button onclick="closeScannerModal()">❮</button>
@@ -539,7 +525,7 @@
     let goals, entries, customFoods, customRecipes;
     let currentMealTarget = 'desayuno';
     let currentTab = 'mine';
-    let html5QrCode = null; // Cambiado a Html5Qrcode nativo
+    let html5QrCode = null; 
     let justAddedEntryId = null;
     let draftRecipe = { name: '', ingredients: [] };
 
@@ -648,7 +634,7 @@
                     <div style="font-weight: 500;">${ing.name} (${ing.grams}g)</div>
                     <div class="food-macros-text">${Math.round(ing.cal)} kcal | P: ${ing.pro.toFixed(1)}g | C: ${ing.car.toFixed(1)}g | G: ${ing.fat.toFixed(1)}g</div>
                 </div>
-                <button class="delete-btn" onclick="removeRecipeIngredient(${index})">✕</button>
+                <button class="delete-btn" onclick="removeRecipeIngredient(${index})">X</button>
             `;
             list.appendChild(li);
         });
@@ -692,7 +678,7 @@
         customRecipes.push(newItem);
         saveData();
         closeModalAnim('recipe-builder-modal');
-        showToast('✓ Receta guardada exitosamente');
+        showToast('Exito: Receta guardada exitosamente');
         if (document.getElementById('search-modal').classList.contains('modal-visible')) {
             renderTabContent();
         }
@@ -767,7 +753,7 @@
         customFoods.push(newItem);
         saveData();
         closeModalAnim('custom-food-modal');
-        showToast('✓ Alimento manual guardado');
+        showToast('Exito: Alimento manual guardado');
         
         ['cf-name','cf-brand','cf-barcode','cf-portion','cf-cal','cf-fat','cf-carb','cf-pro'].forEach(id => document.getElementById(id).value = '');
         if (document.getElementById('search-modal').classList.contains('modal-visible')) {
@@ -864,7 +850,7 @@
             }
             saveData();
             renderTabContent();
-            showToast('✓ Elemento eliminado');
+            showToast('Exito: Elemento eliminado');
         }
     };
 
@@ -908,7 +894,14 @@
         let localMatch = customFoods.find(f => f.code === barcode);
         if(localMatch) {
             container.innerHTML = '';
+            const nut = localMatch.nutriments || {};
+            const cal = nut['energy-kcal_100g'] || nut['energy-kcal'] || 0;
+            const pro = nut.proteins_100g || nut.proteins || 0;
+            const car = nut.carbohydrates_100g || nut.carbohydrates || 0;
+            const fat = nut.fat_100g || nut.fat || 0;
+            
             renderProducts([localMatch], container);
+            openQuantityModal(localMatch.product_name, cal, pro, car, fat, currentTab);
             return;
         }
 
@@ -921,7 +914,18 @@
                 container.innerHTML = `<div class="ns-empty-state"><p>Producto no encontrado.</p><button class="btn-primary" onclick="openCustomFood('${barcode}')">Crear este alimento</button></div>`;
                 return;
             }
-            renderProducts([data.product], container);
+            
+            const p = data.product;
+            const name = p.product_name || 'Desconocido';
+            const nut = p.nutriments || {};
+            const cal = nut['energy-kcal_100g'] || nut['energy-kcal'] || 0;
+            const pro = nut.proteins_100g || nut.proteins || 0;
+            const car = nut.carbohydrates_100g || nut.carbohydrates || 0;
+            const fat = nut.fat_100g || nut.fat || 0;
+            
+            renderProducts([p], container);
+            openQuantityModal(name, cal, pro, car, fat, currentTab);
+
         } catch (error) {
             container.innerHTML = `<div class="ns-empty-state"><p>Error de red: Comprueba tu conexión.</p><button class="btn-secondary" onclick="searchByBarcode('${barcode}')">Reintentar</button></div>`;
         }
@@ -950,7 +954,7 @@
             };
 
             const canDelete = (currentTab === 'mine' || currentTab === 'recipes');
-            const deleteHtml = canDelete ? `<div class="ns-item-delete" onclick="deleteSavedItem(event, '${id}', '${currentTab}')">🗑️</div>` : '';
+            const deleteHtml = canDelete ? `<div class="ns-item-delete" onclick="deleteSavedItem(event, '${id}', '${currentTab}')">X</div>` : '';
 
             let desc = p.ingredients ? `Receta • ${p.ingredients.length} ingredientes` : `${brand}100 g`;
 
@@ -1083,10 +1087,9 @@
         closeModalAnim('search-modal');
         updateUI();
         const mealLabel = currentMealTarget.charAt(0).toUpperCase() + currentMealTarget.slice(1);
-        showToast(savedToMine ? `✓ Añadido a ${mealLabel} y guardado en Mis alimentos` : `✓ Añadido a ${mealLabel}`);
+        showToast(savedToMine ? `Exito: Añadido a ${mealLabel} y guardado en Mis alimentos` : `Exito: Añadido a ${mealLabel}`);
     }
     
-    // --- NUEVA LÓGICA DE ESCÁNER DE PANTALLA COMPLETA ---
     function toggleScanner() {
         if (currentTab !== 'library') {
             switchTab('library');
@@ -1102,17 +1105,16 @@
                 html5QrCode.start(
                     { facingMode: "environment" },
                     {
-                        fps: 10,
-                        qrbox: { width: 250, height: 150 }
+                        fps: 30,
+                        qrbox: { width: 300, height: 150 }
                     },
                     (decodedText, decodedResult) => {
-                        // Lectura exitosa
                         closeScannerModal();
                         document.getElementById('search-input').value = decodedText;
                         searchByBarcode(decodedText);
                     },
                     (errorMessage) => {
-                        // Errores por frame (se ignoran intencionalmente)
+                        
                     }
                 ).catch(err => {
                     closeScannerModal();
@@ -1176,7 +1178,7 @@
                         <div style="font-weight: 500;">${e.name}</div>
                         <div class="food-macros-text">${e.cal} kcal | P: ${e.pro}g | C: ${e.car}g | G: ${e.fat}g</div>
                     </div>
-                    <button class="delete-btn" onclick="deleteEntry(${e.id}, this)">✕</button>
+                    <button class="delete-btn" onclick="deleteEntry(${e.id}, this)">X</button>
                 `;
                 list.appendChild(li);
             });
