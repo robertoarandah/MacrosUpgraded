@@ -114,7 +114,7 @@
         .footer-version { text-align: center; color: var(--text-muted); font-size: 0.75rem; padding: 20px 0; }
         .auth-status { text-align: center; color: var(--color-pro); margin-bottom: 10px; font-weight: bold; }
 
-        /* --- NUEVA UI DEL MODAL BUSCADOR --- */
+        /* NUEVA UI DEL MODAL BUSCADOR */
         #search-modal { padding: 0; background: #000000; }
         .ns-header-block { background: var(--header-red); padding-top: 15px; }
 
@@ -156,6 +156,10 @@
         .ns-m-carb { color: var(--color-carb); margin-right: 5px; }
         .ns-m-pro { color: var(--color-pro); margin-right: 5px; }
         .ns-m-fat { color: var(--color-fat); }
+        
+        /* Botón borrar en lista de búsqueda */
+        .ns-item-delete { color: var(--header-red); margin-left: 15px; font-size: 1.2rem; cursor: pointer; transition: transform 0.15s ease; padding: 5px; }
+        .ns-item-delete:active { transform: scale(0.85); }
 
         .ns-empty-state { padding: 40px 20px; text-align: center; color: #8e8e93; }
         .ns-empty-state p { margin-bottom: 15px; font-size: 0.9rem; }
@@ -255,7 +259,7 @@
     </div>
     
     <div class="footer-version">
-        v1.7.1 | Los alimentos usados desde Biblioteca ahora se guardan en Mis Alimentos
+        v1.8.0 | Editor de recetas y eliminación de alimentos
     </div>
 </div>
 
@@ -265,43 +269,12 @@
     <div class="nav-item" onclick="openAuth()">👤</div>
 </nav>
 
-<div class="modal" id="search-modal">
-    <div class="ns-header-block">
-        <div class="ns-top-nav">
-            <button onclick="closeModals()">❮</button>
-            <span id="search-title">Buscar</span>
-            <button onclick="openCustomFood()">+</button>
-        </div>
-        <div class="ns-search-bar-container">
-            <div class="ns-search-bar">
-                <span class="ns-icon" onclick="searchFood()">🔍</span>
-                <input type="text" id="search-input" placeholder="Buscar">
-                <span class="ns-barcode" onclick="toggleScanner()">[|||]</span>
-            </div>
-        </div>
-        <div class="ns-tabs">
-            <div class="ns-tab active" data-tab="mine" onclick="switchTab('mine')">Mis alimentos</div>
-            <div class="ns-tab" data-tab="recipes" onclick="switchTab('recipes')">Mis recetas</div>
-            <div class="ns-tab" data-tab="library" onclick="switchTab('library')">Biblioteca</div>
-        </div>
-    </div>
-    
-    <div class="modal-content" style="padding: 0;">
-        <div class="ns-section-header">
-            <span id="search-section-title">Mis alimentos guardados</span>
-            <span class="chevron">v</span>
-        </div>
-        
-        <div id="reader" style="padding: 15px; display: none;"></div>
-        
-        <div id="search-results" class="ns-food-list"></div>
-    </div>
-</div>
+<!-- ORDEN DE MODALES IMPORTANTE PARA LA SUPERPOSICIÓN CORRECTA -->
 
 <div class="modal" id="custom-food-modal">
     <div class="modal-header-nav">
         <button onclick="closeModalAnim('custom-food-modal')">&lt;</button>
-        <span id="custom-food-modal-title">Alimento</span>
+        <span id="custom-food-modal-title">Alimento Manual</span>
         <button onclick="saveCustomFood()">💾</button>
     </div>
     <div class="modal-content">
@@ -352,7 +325,75 @@
                 <span class="input-suffix">g</span>
             </div>
         </div>
-        <button class="btn-primary" onclick="saveCustomFood()">Guardar</button>
+        <button class="btn-primary" onclick="saveCustomFood()">Guardar Alimento</button>
+    </div>
+</div>
+
+<div class="modal" id="recipe-builder-modal">
+    <div class="modal-header-nav">
+        <button onclick="closeModalAnim('recipe-builder-modal')">&lt;</button>
+        <span>Crear Receta</span>
+        <button onclick="saveRecipe()">💾</button>
+    </div>
+    <div class="modal-content">
+        <div class="form-section">
+            <div class="form-row">
+                <label>Nombre de la receta</label>
+                <input type="text" id="recipe-name" placeholder="Ej. Hotcakes de avena" required>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="font-size: 1rem;">Ingredientes</h3>
+            <button class="add-food-btn" style="width: auto; padding: 0;" onclick="openSearch('recipe')">+ Añadir</button>
+        </div>
+
+        <ul class="food-list" id="recipe-ingredients-list"></ul>
+
+        <div class="qty-preview" style="margin-top: 15px;">
+            <div class="qty-preview-col"><span id="rb-total-cal">0</span><span>kcal totales</span></div>
+            <div class="qty-preview-col"><span id="rb-total-car">0 g</span><span>Carbs</span></div>
+            <div class="qty-preview-col"><span id="rb-total-pro">0 g</span><span>Proteína</span></div>
+            <div class="qty-preview-col"><span id="rb-total-fat">0 g</span><span>Grasa</span></div>
+        </div>
+        <div style="text-align: center; color: var(--text-muted); font-size: 0.8rem; margin-top: 5px;">
+            Peso total de la receta: <span id="rb-total-weight">0</span> g
+        </div>
+
+        <button class="btn-primary" onclick="saveRecipe()" style="margin-top: 20px;">Guardar Receta</button>
+    </div>
+</div>
+
+<div class="modal" id="search-modal">
+    <div class="ns-header-block">
+        <div class="ns-top-nav">
+            <button onclick="closeModalAnim('search-modal')">❮</button>
+            <span id="search-title">Buscar</span>
+            <button onclick="handlePlusButton()">+</button>
+        </div>
+        <div class="ns-search-bar-container">
+            <div class="ns-search-bar">
+                <span class="ns-icon" onclick="searchFood()">🔍</span>
+                <input type="text" id="search-input" placeholder="Buscar">
+                <span class="ns-barcode" onclick="toggleScanner()">[|||]</span>
+            </div>
+        </div>
+        <div class="ns-tabs">
+            <div class="ns-tab active" data-tab="mine" onclick="switchTab('mine')">Mis alimentos</div>
+            <div class="ns-tab" data-tab="recipes" onclick="switchTab('recipes')">Mis recetas</div>
+            <div class="ns-tab" data-tab="library" onclick="switchTab('library')">Biblioteca</div>
+        </div>
+    </div>
+    
+    <div class="modal-content" style="padding: 0;">
+        <div class="ns-section-header">
+            <span id="search-section-title">Mis alimentos guardados</span>
+            <span class="chevron">v</span>
+        </div>
+        
+        <div id="reader" style="padding: 15px; display: none;"></div>
+        
+        <div id="search-results" class="ns-food-list"></div>
     </div>
 </div>
 
@@ -453,6 +494,7 @@
     let currentTab = 'mine'; // 'mine' | 'recipes' | 'library'
     let html5QrcodeScanner = null;
     let justAddedEntryId = null;
+    let draftRecipe = { name: '', ingredients: [] }; // Estado del constructor de recetas
 
     function loadData() {
         goals = JSON.parse(localStorage.getItem(`macroGoals_${currentUser}`)) || { cal: 2000, pro: 150, car: 200, fat: 65 };
@@ -502,7 +544,11 @@
 
     function openSearch(meal) {
         currentMealTarget = meal;
-        document.getElementById('search-title').textContent = `Añadir a ${meal.charAt(0).toUpperCase() + meal.slice(1)}`;
+        if(meal === 'recipe') {
+            document.getElementById('search-title').textContent = 'Añadir Ingrediente';
+        } else {
+            document.getElementById('search-title').textContent = `Añadir a ${meal.charAt(0).toUpperCase() + meal.slice(1)}`;
+        }
         document.getElementById('search-input').value = '';
         openModalAnim('search-modal');
         switchTab('mine');
@@ -520,23 +566,95 @@
             document.getElementById('auth-logged-in').style.display = 'none';
         }
     }
+    
+    // Controlador del botón "+" en el buscador
+    function handlePlusButton() {
+        if (currentTab === 'recipes') {
+            openRecipeBuilder();
+        } else {
+            openCustomFood();
+        }
+    }
+
+    // Modal para alimento manual
     function openCustomFood(barcode = '') {
         document.getElementById('cf-barcode').value = barcode;
-
-        // Adapta el formulario según la pestaña activa (Alimento vs Receta)
-        const isRecipe = currentTab === 'recipes';
-        document.getElementById('custom-food-modal-title').textContent = isRecipe ? 'Receta' : 'Alimento';
-        document.getElementById('cf-name-label').textContent = isRecipe ? 'Nombre de la receta' : 'Descripción';
-        document.getElementById('cf-name').placeholder = isRecipe ? 'Ej. Pollo con arroz' : 'Ej. Receta Crujiente';
-        document.getElementById('cf-portion-label').textContent = isRecipe ? 'Tamaño de porción' : 'Tamaño de porción';
-        document.getElementById('cf-portion-suffix').textContent = isRecipe ? 'g/ml' : 'g/ml';
-        document.getElementById('cf-brand-row').style.display = isRecipe ? 'none' : 'flex';
-        document.getElementById('cf-hint').textContent = isRecipe
-            ? 'Ingresa el total de macros de toda la porción/receta que preparaste.'
-            : 'Consejo: Deja el campo de calorías vacío para que se calcule automáticamente a partir de los macronutrientes.';
-
         openModalAnim('custom-food-modal');
     }
+
+    // Creador de Recetas
+    function openRecipeBuilder() {
+        draftRecipe = { name: '', ingredients: [] };
+        document.getElementById('recipe-name').value = '';
+        updateRecipeBuilderUI();
+        openModalAnim('recipe-builder-modal');
+    }
+
+    function updateRecipeBuilderUI() {
+        const list = document.getElementById('recipe-ingredients-list');
+        list.innerHTML = '';
+        let tCal = 0, tPro = 0, tCar = 0, tFat = 0, tWeight = 0;
+
+        draftRecipe.ingredients.forEach((ing, index) => {
+            tCal += ing.cal; tPro += ing.pro; tCar += ing.car; tFat += ing.fat; tWeight += ing.grams;
+            const li = document.createElement('li');
+            li.className = 'food-item';
+            li.innerHTML = `
+                <div style="flex: 1;">
+                    <div style="font-weight: 500;">${ing.name} (${ing.grams}g)</div>
+                    <div class="food-macros-text">${Math.round(ing.cal)} kcal | P: ${ing.pro.toFixed(1)}g | C: ${ing.car.toFixed(1)}g | G: ${ing.fat.toFixed(1)}g</div>
+                </div>
+                <button class="delete-btn" onclick="removeRecipeIngredient(${index})">✕</button>
+            `;
+            list.appendChild(li);
+        });
+
+        document.getElementById('rb-total-cal').textContent = Math.round(tCal);
+        document.getElementById('rb-total-pro').textContent = tPro.toFixed(1) + ' g';
+        document.getElementById('rb-total-car').textContent = tCar.toFixed(1) + ' g';
+        document.getElementById('rb-total-fat').textContent = tFat.toFixed(1) + ' g';
+        document.getElementById('rb-total-weight').textContent = tWeight;
+    }
+
+    function removeRecipeIngredient(index) {
+        draftRecipe.ingredients.splice(index, 1);
+        updateRecipeBuilderUI();
+    }
+
+    function saveRecipe() {
+        draftRecipe.name = document.getElementById('recipe-name').value.trim();
+        if(!draftRecipe.name) return showToast('Ponle un nombre a la receta');
+        if(draftRecipe.ingredients.length === 0) return showToast('Añade al menos un ingrediente');
+
+        let tCal = 0, tPro = 0, tCar = 0, tFat = 0, tWeight = 0;
+        draftRecipe.ingredients.forEach(ing => {
+            tCal += ing.cal; tPro += ing.pro; tCar += ing.car; tFat += ing.fat; tWeight += ing.grams;
+        });
+
+        // Guardamos los nutrientes basados en 100g para que el buscador global los interprete igual
+        const factor = 100 / tWeight;
+        const newItem = {
+            id: 'recipe_' + Date.now(),
+            product_name: draftRecipe.name,
+            code: '',
+            ingredients: draftRecipe.ingredients,
+            totalWeight: tWeight,
+            nutriments: {
+                'energy-kcal_100g': Math.round(tCal * factor),
+                'proteins_100g': tPro * factor,
+                'carbohydrates_100g': tCar * factor,
+                'fat_100g': tFat * factor
+            }
+        };
+        customRecipes.push(newItem);
+        saveData();
+        closeModalAnim('recipe-builder-modal');
+        showToast('✓ Receta guardada exitosamente');
+        if (document.getElementById('search-modal').classList.contains('modal-visible')) {
+            renderTabContent();
+        }
+    }
+
     function closeModals() {
         document.querySelectorAll('.modal').forEach(m => closeModalAnim(m.id));
         closeScanner();
@@ -591,11 +709,10 @@
 
         if(!name || isNaN(portion)) { showToast('Llena al menos el nombre y la porción.'); return; }
 
-        const isRecipe = currentTab === 'recipes';
         const factor = 100 / portion;
         const newItem = {
-            id: (isRecipe ? 'recipe_' : 'custom_') + Date.now(),
-            product_name: (!isRecipe && brand) ? `${name} - ${brand}` : name,
+            id: 'custom_' + Date.now(),
+            product_name: brand ? `${name} - ${brand}` : name,
             code: barcode,
             nutriments: {
                 'energy-kcal_100g': Math.round(cal * factor),
@@ -605,18 +722,15 @@
             }
         };
 
-        if (isRecipe) {
-            customRecipes.push(newItem);
-        } else {
-            customFoods.push(newItem);
-        }
+        customFoods.push(newItem);
         saveData();
         closeModalAnim('custom-food-modal');
-        showToast(isRecipe ? '✓ Receta guardada' : '✓ Alimento guardado');
+        showToast('✓ Alimento manual guardado');
         
         ['cf-name','cf-brand','cf-barcode','cf-portion','cf-cal','cf-fat','cf-carb','cf-pro'].forEach(id => document.getElementById(id).value = '');
-
-        renderTabContent();
+        if (document.getElementById('search-modal').classList.contains('modal-visible')) {
+            renderTabContent();
+        }
     }
 
     document.getElementById('search-input').addEventListener('keypress', function (e) {
@@ -659,7 +773,7 @@
 
         const titles = {
             mine: 'Mis alimentos guardados',
-            recipes: 'Mis recetas',
+            recipes: 'Mis recetas guardadas',
             library: 'Biblioteca de alimentos'
         };
         document.getElementById('search-section-title').textContent = titles[tab];
@@ -679,9 +793,9 @@
         container.classList.add('fade-refresh');
 
         if (currentTab === 'mine') {
-            renderLocalList(customFoods, query, container, 'Aún no tienes alimentos guardados.', 'Añadir alimento');
+            renderLocalList(customFoods, query, container, 'Aún no tienes alimentos guardados.', 'Añadir alimento', 'openCustomFood');
         } else if (currentTab === 'recipes') {
-            renderLocalList(customRecipes, query, container, 'Aún no tienes recetas guardadas.', 'Crear receta');
+            renderLocalList(customRecipes, query, container, 'Aún no tienes recetas guardadas.', 'Crear receta', 'openRecipeBuilder');
         } else if (currentTab === 'library') {
             if (!query) {
                 container.innerHTML = '<div class="ns-empty-state"><p>Escribe el nombre de un alimento o escanea un código de barras para buscar en la biblioteca.</p></div>';
@@ -691,19 +805,33 @@
         }
     }
 
-    function renderLocalList(list, query, container, emptyMsg, emptyBtnLabel) {
+    function renderLocalList(list, query, container, emptyMsg, emptyBtnLabel, actionFn) {
         const filtered = query
             ? list.filter(f => f.product_name.toLowerCase().includes(query.toLowerCase()))
             : list;
 
         if (filtered.length === 0) {
-            container.innerHTML = `<div class="ns-empty-state"><p>${emptyMsg}</p><button class="btn-primary" onclick="openCustomFood()">+ ${emptyBtnLabel}</button></div>`;
+            container.innerHTML = `<div class="ns-empty-state"><p>${emptyMsg}</p><button class="btn-primary" onclick="${actionFn}()">+ ${emptyBtnLabel}</button></div>`;
             return;
         }
         renderProducts([...filtered].reverse(), container);
     }
 
-    // Búsqueda por texto: solo aplica a la pestaña Biblioteca (API OpenFoodFacts)
+    // Eliminación de guardados locales
+    window.deleteSavedItem = function(event, id, tab) {
+        event.stopPropagation(); // Evita que se abra el modal de añadir cantidad
+        if (confirm('¿Estás seguro de eliminar este elemento guardado?')) {
+            if (tab === 'mine') {
+                customFoods = customFoods.filter(f => f.id !== id);
+            } else if (tab === 'recipes') {
+                customRecipes = customRecipes.filter(f => f.id !== id);
+            }
+            saveData();
+            renderTabContent();
+            showToast('✓ Elemento eliminado');
+        }
+    };
+
     function searchFood() {
         if (currentTab !== 'library') {
             switchTab('library');
@@ -741,7 +869,7 @@
         const container = document.getElementById('search-results');
         container.innerHTML = `<div style="padding:20px; color:#8e8e93;">Buscando código: ${barcode}...</div>`;
 
-        let localMatch = customFoods.find(f => f.code === barcode) || customRecipes.find(f => f.code === barcode);
+        let localMatch = customFoods.find(f => f.code === barcode);
         if(localMatch) {
             container.innerHTML = '';
             renderProducts([localMatch], container);
@@ -763,7 +891,7 @@
         }
     }
 
-    // --- RENDER PRODUCTS CON LA NUEVA UI ---
+    // --- RENDER PRODUCTS ---
     function renderProducts(products, container) {
         container.innerHTML = '';
         products.forEach((p, idx) => {
@@ -774,7 +902,7 @@
             const pro = nut.proteins_100g || nut.proteins || 0;
             const car = nut.carbohydrates_100g || nut.carbohydrates || 0;
             const fat = nut.fat_100g || nut.fat || 0;
-            const id = Math.random().toString(36).substring(2, 11);
+            const id = p.id || Math.random().toString(36).substring(2, 11);
             
             const item = document.createElement('div');
             item.className = 'ns-food-item';
@@ -785,11 +913,19 @@
                 item.classList.add('ns-item-tap');
                 setTimeout(() => openQuantityModal(name, cal, pro, car, fat, sourceTab), 130);
             };
+
+            // Permite borrar solo si está en guardados
+            const canDelete = (currentTab === 'mine' || currentTab === 'recipes');
+            const deleteHtml = canDelete ? `<div class="ns-item-delete" onclick="deleteSavedItem(event, '${id}', '${currentTab}')">🗑️</div>` : '';
+
+            // Mostrar si es una receta con ingredientes
+            let desc = p.ingredients ? `Receta • ${p.ingredients.length} ingredientes` : `${brand}100 g`;
+
             item.innerHTML = `
                 <div class="ns-checkbox"></div>
                 <div class="ns-item-info">
                     <div class="ns-item-name">${name}</div>
-                    <div class="ns-item-desc">${brand}100 g</div>
+                    <div class="ns-item-desc">${desc}</div>
                 </div>
                 <div class="ns-item-stats">
                     <div class="ns-item-cal">${Math.round(cal)}</div>
@@ -799,6 +935,7 @@
                         G: <span class="ns-m-fat">${parseFloat(fat).toFixed(1)}</span>
                     </div>
                 </div>
+                ${deleteHtml}
             `;
             item.addEventListener('click', openQty);
             container.appendChild(item);
@@ -812,14 +949,14 @@
         }
     }
 
-    // --- MODAL DE CANTIDAD (gramaje al seleccionar un alimento) ---
-    let pendingFood = null; // { name, cal100, pro100, car100, fat100 }
+    // --- MODAL DE CANTIDAD ---
+    let pendingFood = null; 
 
     function openQuantityModal(name, cal100, pro100, car100, fat100, sourceTab) {
         pendingFood = { name, cal100, pro100, car100, fat100, sourceTab: sourceTab || currentTab };
 
         document.getElementById('qty-food-name').textContent = name;
-        document.getElementById('qty-food-base').textContent =
+        document.getElementById('qty-food-base').textContent = 
             `${Math.round(cal100)} kcal por 100 g`;
         document.getElementById('qty-grams').value = 100;
 
@@ -868,6 +1005,25 @@
         if (isNaN(grams) || grams <= 0) { showToast('Ingresa una cantidad válida.'); return; }
 
         const multiplier = grams / 100;
+
+        // Si se estaba editando/creando una receta, se añade a los ingredientes
+        if (currentMealTarget === 'recipe') {
+            draftRecipe.ingredients.push({
+                name: pendingFood.name,
+                grams: grams,
+                cal: pendingFood.cal100 * multiplier,
+                pro: pendingFood.pro100 * multiplier,
+                car: pendingFood.car100 * multiplier,
+                fat: pendingFood.fat100 * multiplier
+            });
+            updateRecipeBuilderUI();
+            closeModalAnim('quantity-modal');
+            closeModalAnim('search-modal');
+            pendingFood = null;
+            return;
+        }
+
+        // Si es a un platillo diario (Desayuno, Comida, etc)
         const newEntry = {
             id: Date.now(),
             meal: currentMealTarget,
@@ -880,8 +1036,7 @@
         entries.push(newEntry);
         justAddedEntryId = newEntry.id;
 
-        // Guarda el alimento en "Mis alimentos" cuando viene de la Biblioteca,
-        // para que quede disponible la próxima vez sin volver a buscarlo.
+        // Auto-guardado en Mis Alimentos
         let savedToMine = false;
         if (pendingFood.sourceTab === 'library') {
             const alreadySaved = customFoods.some(f => f.product_name === pendingFood.name);
@@ -904,13 +1059,13 @@
         pendingFood = null;
         saveData();
         closeModalAnim('quantity-modal');
-        closeModals();
+        closeModalAnim('search-modal'); // Cierra la búsqueda para regresar al diario
         updateUI();
         const mealLabel = currentMealTarget.charAt(0).toUpperCase() + currentMealTarget.slice(1);
         showToast(savedToMine ? `✓ Añadido a ${mealLabel} y guardado en Mis alimentos` : `✓ Añadido a ${mealLabel}`);
     }
     
-    // --- LÓGICA DE ESCÁNER DE CÁMARA (COMPLETA) ---
+    // --- ESCÁNER DE CÁMARA ---
     function toggleScanner() {
         if (currentTab !== 'library') {
             switchTab('library');
@@ -934,7 +1089,7 @@
     }
 
     function onScanFailure(error) {
-        // Fallos de lectura silenciosos por frame, se ignora intencionalmente
+        // Ignorado por diseño, se dispara cada frame sin lectura exitosa
     }
 
     function closeScanner() {
@@ -1018,7 +1173,6 @@
         document.getElementById('top-fat-bar').style.width = pFat + '%';
     }
 
-    // Inicializar la Interfaz Gráfica con los datos almacenados
     updateUI();
 </script>
 </body>
