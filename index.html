@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Tracker de Macros</title>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
@@ -22,7 +22,7 @@
         body { background: var(--bg-main); color: var(--text-light); padding-bottom: 70px; }
         
         /* Header */
-        .app-header { background: var(--header-red); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; font-weight: bold; }
+        .app-header { background: var(--header-red); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; font-weight: bold; padding-top: max(15px, env(safe-area-inset-top)); }
         .app-header button { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; gap: 5px; }
         
         /* Top Macros Summary */
@@ -75,7 +75,7 @@
         @keyframes entryHighlight { 0% { background: rgba(255,75,75,0.16); } 100% { background: transparent; } }
         
         /* Bottom Nav */
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: var(--bg-card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 15px 0; z-index: 10; }
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: var(--bg-card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 15px 0; z-index: 10; padding-bottom: max(15px, env(safe-area-inset-bottom)); }
         .nav-item { color: var(--text-muted); cursor: pointer; font-size: 1.2rem; font-weight: bold; transition: color 0.2s ease, transform 0.15s ease; }
         .nav-item.active { color: var(--header-red); }
         .nav-item:active { transform: scale(0.92); }
@@ -84,7 +84,7 @@
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); z-index: 20; overflow-y: auto; opacity: 0; transform: translateY(2%); transition: opacity 0.22s ease, transform 0.28s cubic-bezier(.22,1,.36,1); }
         .modal.modal-visible { opacity: 1; transform: translateY(0); }
         .modal-content { padding: 20px; }
-        .modal-header-nav { background: var(--header-red); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 21; font-weight: bold; }
+        .modal-header-nav { background: var(--header-red); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 21; font-weight: bold; padding-top: max(15px, env(safe-area-inset-top)); }
         .modal-header-nav button { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; transition: transform 0.15s ease, opacity 0.15s ease; }
         .modal-header-nav button:active { transform: scale(0.85); opacity: 0.7; }
         
@@ -114,9 +114,9 @@
         .footer-version { text-align: center; color: var(--text-muted); font-size: 0.75rem; padding: 20px 0; }
         .auth-status { text-align: center; color: var(--color-pro); margin-bottom: 10px; font-weight: bold; }
 
-        /* NUEVA UI DEL MODAL BUSCADOR */
+        /* UI DEL MODAL BUSCADOR */
         #search-modal { padding: 0; background: #000000; }
-        .ns-header-block { background: var(--header-red); padding-top: 15px; }
+        .ns-header-block { background: var(--header-red); padding-top: max(15px, env(safe-area-inset-top)); }
 
         .ns-top-nav { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; color: white; font-weight: 600; font-size: 1.1rem; }
         .ns-top-nav button { background: none; border: none; color: white; font-size: 1.8rem; cursor: pointer; font-weight: 300; display: flex; align-items: center; }
@@ -157,7 +157,6 @@
         .ns-m-pro { color: var(--color-pro); margin-right: 5px; }
         .ns-m-fat { color: var(--color-fat); }
         
-        /* Botón borrar en lista de búsqueda */
         .ns-item-delete { color: var(--header-red); margin-left: 15px; font-size: 1.2rem; cursor: pointer; transition: transform 0.15s ease; padding: 5px; }
         .ns-item-delete:active { transform: scale(0.85); }
 
@@ -178,18 +177,59 @@
         .qty-preview-col { display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; font-weight: bold; }
         .qty-preview-col span:last-child { font-size: 0.7rem; color: var(--text-muted); font-weight: normal; }
         .qty-preview-col span.qty-pulse { animation: qtyPulse 0.32s ease; }
-        @keyframes qtyPulse { 0% { transform: scale(1); } 35% { transform: scale(1.18); color: var(--header-red); } 100% { transform: scale(1); } }
-
-        .ns-promo-banner { background: #1c1c1e; border-radius: 10px; margin: 15px 20px; padding: 15px; text-align: center; color: #e5e5ea; font-size: 0.9rem; display: flex; justify-content: center; align-items: center; gap: 10px; border: 1px solid #2c2c2e; }
-        .ns-promo-icon { color: #32d74b; font-size: 1.2rem; }
 
         /* Toast de confirmación */
-        .app-toast { position: fixed; left: 50%; bottom: 90px; transform: translate(-50%, 16px); background: #2c2c2e; color: white; padding: 12px 22px; border-radius: 999px; font-size: 0.85rem; font-weight: 500; opacity: 0; pointer-events: none; z-index: 999; box-shadow: 0 8px 24px rgba(0,0,0,0.45); transition: transform 0.3s cubic-bezier(.22,1,.36,1), opacity 0.3s ease; display: flex; align-items: center; gap: 8px; max-width: 85vw; text-align: center; }
+        .app-toast { position: fixed; left: 50%; bottom: 90px; transform: translate(-50%, 16px); background: #2c2c2e; color: white; padding: 12px 22px; border-radius: 999px; font-size: 0.85rem; font-weight: 500; opacity: 0; pointer-events: none; z-index: 999999; box-shadow: 0 8px 24px rgba(0,0,0,0.45); transition: transform 0.3s cubic-bezier(.22,1,.36,1), opacity 0.3s ease; display: flex; align-items: center; gap: 8px; max-width: 85vw; text-align: center; }
         .app-toast.show { transform: translate(-50%, 0); opacity: 1; }
 
-        /* Scanner reveal */
-        #reader { width: 100%; margin-top: 0; display: none; max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.3s ease, opacity 0.25s ease; }
-        #reader.reader-open { display: block; max-height: 500px; opacity: 1; margin-top: 15px; }
+        /* ESTILOS DEL NUEVO ESCÁNER PANTALLA COMPLETA */
+        #scanner-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: #000;
+            z-index: 99999;
+            flex-direction: column;
+        }
+        #scanner-modal.open {
+            display: flex;
+            animation: slideUp 0.3s cubic-bezier(.22,1,.36,1) forwards;
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .scanner-header {
+            background: var(--header-red);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            position: absolute;
+            top: 0; width: 100%;
+            z-index: 10;
+            padding-top: max(15px, env(safe-area-inset-top));
+        }
+        .scanner-header button {
+            background: none; border: none; color: white; font-size: 1.8rem; font-weight: 300; cursor: pointer;
+        }
+        
+        #reader-container {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: #000;
+            overflow: hidden;
+        }
+        /* Contenedor interno inyectado por html5-qrcode */
+        #reader {
+            width: 100%; height: 100%; border: none !important;
+        }
+        #reader video {
+            object-fit: cover !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
     </style>
 </head>
 <body>
@@ -259,7 +299,7 @@
     </div>
     
     <div class="footer-version">
-        v1.8.0 | Editor de recetas y eliminación de alimentos
+        v1.9.0 | Escáner en pantalla completa
     </div>
 </div>
 
@@ -269,7 +309,7 @@
     <div class="nav-item" onclick="openAuth()">👤</div>
 </nav>
 
-<!-- ORDEN DE MODALES IMPORTANTE PARA LA SUPERPOSICIÓN CORRECTA -->
+<!-- MODALES -->
 
 <div class="modal" id="custom-food-modal">
     <div class="modal-header-nav">
@@ -390,9 +430,6 @@
             <span id="search-section-title">Mis alimentos guardados</span>
             <span class="chevron">v</span>
         </div>
-        
-        <div id="reader" style="padding: 15px; display: none;"></div>
-        
         <div id="search-results" class="ns-food-list"></div>
     </div>
 </div>
@@ -487,14 +524,24 @@
     </div>
 </div>
 
+<!-- NUEVO CONTENEDOR PANTALLA COMPLETA PARA ESCÁNER -->
+<div id="scanner-modal">
+    <div class="scanner-header">
+        <button onclick="closeScannerModal()">❮</button>
+    </div>
+    <div id="reader-container">
+        <div id="reader"></div>
+    </div>
+</div>
+
 <script>
     let currentUser = localStorage.getItem('currentUser') || 'default';
     let goals, entries, customFoods, customRecipes;
     let currentMealTarget = 'desayuno';
-    let currentTab = 'mine'; // 'mine' | 'recipes' | 'library'
-    let html5QrcodeScanner = null;
+    let currentTab = 'mine';
+    let html5QrCode = null; // Cambiado a Html5Qrcode nativo
     let justAddedEntryId = null;
-    let draftRecipe = { name: '', ingredients: [] }; // Estado del constructor de recetas
+    let draftRecipe = { name: '', ingredients: [] };
 
     function loadData() {
         goals = JSON.parse(localStorage.getItem(`macroGoals_${currentUser}`)) || { cal: 2000, pro: 150, car: 200, fat: 65 };
@@ -513,12 +560,11 @@
 
     loadData();
 
-    // --- HELPERS DE ANIMACIÓN DE MODALES Y TOAST ---
     function openModalAnim(id) {
         const m = document.getElementById(id);
         if (!m) return;
         m.style.display = 'block';
-        void m.offsetWidth; // fuerza reflow para que la transición se dispare
+        void m.offsetWidth;
         m.classList.add('modal-visible');
     }
 
@@ -554,6 +600,7 @@
         switchTab('mine');
         setTimeout(() => document.getElementById('search-input').focus(), 150);
     }
+    
     function openCalc() { openModalAnim('calc-modal'); }
     function openAuth() {
         openModalAnim('auth-modal');
@@ -567,7 +614,6 @@
         }
     }
     
-    // Controlador del botón "+" en el buscador
     function handlePlusButton() {
         if (currentTab === 'recipes') {
             openRecipeBuilder();
@@ -576,13 +622,11 @@
         }
     }
 
-    // Modal para alimento manual
     function openCustomFood(barcode = '') {
         document.getElementById('cf-barcode').value = barcode;
         openModalAnim('custom-food-modal');
     }
 
-    // Creador de Recetas
     function openRecipeBuilder() {
         draftRecipe = { name: '', ingredients: [] };
         document.getElementById('recipe-name').value = '';
@@ -631,7 +675,6 @@
             tCal += ing.cal; tPro += ing.pro; tCar += ing.car; tFat += ing.fat; tWeight += ing.grams;
         });
 
-        // Guardamos los nutrientes basados en 100g para que el buscador global los interprete igual
         const factor = 100 / tWeight;
         const newItem = {
             id: 'recipe_' + Date.now(),
@@ -657,7 +700,6 @@
 
     function closeModals() {
         document.querySelectorAll('.modal').forEach(m => closeModalAnim(m.id));
-        closeScanner();
     }
 
     function login() {
@@ -737,7 +779,6 @@
         if (e.key === 'Enter') { e.preventDefault(); searchFood(); }
     });
     document.getElementById('search-input').addEventListener('input', function () {
-        // Búsqueda local instantánea para "Mis alimentos" y "Mis recetas"
         if (currentTab !== 'library') renderTabContent();
     });
 
@@ -764,7 +805,6 @@
         }
     }
 
-    // --- CAMBIO DE PESTAÑA (Mis alimentos / Mis recetas / Biblioteca) ---
     function switchTab(tab) {
         currentTab = tab;
         document.querySelectorAll('.ns-tab').forEach(t => {
@@ -778,16 +818,13 @@
         };
         document.getElementById('search-section-title').textContent = titles[tab];
 
-        closeScanner();
         renderTabContent();
     }
 
-    // Decide qué mostrar según la pestaña activa y el texto de búsqueda actual
     function renderTabContent() {
         const query = document.getElementById('search-input').value.trim();
         const container = document.getElementById('search-results');
 
-        // Dispara la animación de aparición de la lista
         container.classList.remove('fade-refresh');
         void container.offsetWidth;
         container.classList.add('fade-refresh');
@@ -817,9 +854,8 @@
         renderProducts([...filtered].reverse(), container);
     }
 
-    // Eliminación de guardados locales
     window.deleteSavedItem = function(event, id, tab) {
-        event.stopPropagation(); // Evita que se abra el modal de añadir cantidad
+        event.stopPropagation();
         if (confirm('¿Estás seguro de eliminar este elemento guardado?')) {
             if (tab === 'mine') {
                 customFoods = customFoods.filter(f => f.id !== id);
@@ -891,7 +927,6 @@
         }
     }
 
-    // --- RENDER PRODUCTS ---
     function renderProducts(products, container) {
         container.innerHTML = '';
         products.forEach((p, idx) => {
@@ -914,11 +949,9 @@
                 setTimeout(() => openQuantityModal(name, cal, pro, car, fat, sourceTab), 130);
             };
 
-            // Permite borrar solo si está en guardados
             const canDelete = (currentTab === 'mine' || currentTab === 'recipes');
             const deleteHtml = canDelete ? `<div class="ns-item-delete" onclick="deleteSavedItem(event, '${id}', '${currentTab}')">🗑️</div>` : '';
 
-            // Mostrar si es una receta con ingredientes
             let desc = p.ingredients ? `Receta • ${p.ingredients.length} ingredientes` : `${brand}100 g`;
 
             item.innerHTML = `
@@ -940,28 +973,19 @@
             item.addEventListener('click', openQty);
             container.appendChild(item);
         });
-
-        if (currentTab === 'library') {
-            const promo = document.createElement('div');
-            promo.className = 'ns-promo-banner';
-            promo.innerHTML = '<span class="ns-promo-icon">🏆</span> Mejor sin anuncios. Desbloquear Plus.';
-            container.appendChild(promo);
-        }
     }
 
-    // --- MODAL DE CANTIDAD ---
     let pendingFood = null; 
 
     function openQuantityModal(name, cal100, pro100, car100, fat100, sourceTab) {
         pendingFood = { name, cal100, pro100, car100, fat100, sourceTab: sourceTab || currentTab };
 
         document.getElementById('qty-food-name').textContent = name;
-        document.getElementById('qty-food-base').textContent = 
-            `${Math.round(cal100)} kcal por 100 g`;
+        document.getElementById('qty-food-base').textContent = `${Math.round(cal100)} kcal por 100 g`;
         document.getElementById('qty-grams').value = 100;
 
         document.querySelectorAll('.qty-quick-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.qty-quick-btn')[1].classList.add('active'); // 100g por defecto
+        document.querySelectorAll('.qty-quick-btn')[1].classList.add('active');
 
         updateQtyPreview();
         openModalAnim('quantity-modal');
@@ -1006,7 +1030,6 @@
 
         const multiplier = grams / 100;
 
-        // Si se estaba editando/creando una receta, se añade a los ingredientes
         if (currentMealTarget === 'recipe') {
             draftRecipe.ingredients.push({
                 name: pendingFood.name,
@@ -1023,7 +1046,6 @@
             return;
         }
 
-        // Si es a un platillo diario (Desayuno, Comida, etc)
         const newEntry = {
             id: Date.now(),
             meal: currentMealTarget,
@@ -1036,7 +1058,6 @@
         entries.push(newEntry);
         justAddedEntryId = newEntry.id;
 
-        // Auto-guardado en Mis Alimentos
         let savedToMine = false;
         if (pendingFood.sourceTab === 'library') {
             const alreadySaved = customFoods.some(f => f.product_name === pendingFood.name);
@@ -1059,49 +1080,62 @@
         pendingFood = null;
         saveData();
         closeModalAnim('quantity-modal');
-        closeModalAnim('search-modal'); // Cierra la búsqueda para regresar al diario
+        closeModalAnim('search-modal');
         updateUI();
         const mealLabel = currentMealTarget.charAt(0).toUpperCase() + currentMealTarget.slice(1);
         showToast(savedToMine ? `✓ Añadido a ${mealLabel} y guardado en Mis alimentos` : `✓ Añadido a ${mealLabel}`);
     }
     
-    // --- ESCÁNER DE CÁMARA ---
+    // --- NUEVA LÓGICA DE ESCÁNER DE PANTALLA COMPLETA ---
     function toggleScanner() {
         if (currentTab !== 'library') {
             switchTab('library');
         }
-        const readerDiv = document.getElementById('reader');
-        if (readerDiv.classList.contains('reader-open')) {
-            closeScanner();
-        } else {
-            readerDiv.classList.add('reader-open');
-            if (!html5QrcodeScanner) {
-                html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 250, height: 250 } });
-                html5QrcodeScanner.render(onScanSuccess, onScanFailure);
-            }
+        document.getElementById('scanner-modal').classList.add('open');
+        
+        if (!html5QrCode) {
+            html5QrCode = new Html5Qrcode("reader");
         }
-    }
-
-    function onScanSuccess(decodedText, decodedResult) {
-        closeScanner();
-        document.getElementById('search-input').value = decodedText;
-        searchByBarcode(decodedText);
-    }
-
-    function onScanFailure(error) {
-        // Ignorado por diseño, se dispara cada frame sin lectura exitosa
-    }
-
-    function closeScanner() {
-        const readerDiv = document.getElementById('reader');
-        if (readerDiv) readerDiv.classList.remove('reader-open');
-        if (html5QrcodeScanner) {
-            try {
-                html5QrcodeScanner.clear();
-                html5QrcodeScanner = null;
-            } catch (error) {
-                console.error("Error al detener el escáner:", error);
+        
+        Html5Qrcode.getCameras().then(devices => {
+            if (devices && devices.length) {
+                html5QrCode.start(
+                    { facingMode: "environment" },
+                    {
+                        fps: 10,
+                        qrbox: { width: 250, height: 150 }
+                    },
+                    (decodedText, decodedResult) => {
+                        // Lectura exitosa
+                        closeScannerModal();
+                        document.getElementById('search-input').value = decodedText;
+                        searchByBarcode(decodedText);
+                    },
+                    (errorMessage) => {
+                        // Errores por frame (se ignoran intencionalmente)
+                    }
+                ).catch(err => {
+                    closeScannerModal();
+                    showToast("No se pudo iniciar la cámara.");
+                });
+            } else {
+                closeScannerModal();
+                showToast("No se encontraron cámaras.");
             }
+        }).catch(err => {
+            closeScannerModal();
+            showToast("Debes conceder permisos de cámara.");
+        });
+    }
+
+    function closeScannerModal() {
+        document.getElementById('scanner-modal').classList.remove('open');
+        if (html5QrCode) {
+            html5QrCode.stop().then(() => {
+                html5QrCode.clear();
+            }).catch(err => {
+                console.log("No se pudo detener el escáner de manera limpia", err);
+            });
         }
     }
 
@@ -1157,13 +1191,11 @@
 
         justAddedEntryId = null;
         
-        // Resumen superior
         document.getElementById('top-cal-text').textContent = `${totals.cal} / ${goals.cal} kcal`;
         document.getElementById('top-carb-text').textContent = `${totals.car} / ${goals.car} g`;
         document.getElementById('top-pro-text').textContent = `${totals.pro} / ${goals.pro} g`;
         document.getElementById('top-fat-text').textContent = `${totals.fat} / ${goals.fat} g`;
         
-        // Barras de progreso
         const pCarb = Math.min(100, (totals.car / (goals.car || 1)) * 100);
         const pPro = Math.min(100, (totals.pro / (goals.pro || 1)) * 100);
         const pFat = Math.min(100, (totals.fat / (goals.fat || 1)) * 100);
