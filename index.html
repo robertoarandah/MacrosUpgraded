@@ -307,7 +307,7 @@
     </div>
     
     <div class="footer-version">
-        v2.2.0 | API nativa y alta resolucion
+        v2.3.0 | Estabilidad y correccion del escaner
     </div>
 </div>
 
@@ -1118,51 +1118,45 @@
         
         if (!html5QrCode) {
             html5QrCode = new Html5Qrcode("reader", {
-                experimentalFeatures: {
-                    useBarCodeDetectorIfSupported: true
-                }
+                formatsToSupport: [
+                    Html5QrcodeSupportedFormats.EAN_13,
+                    Html5QrcodeSupportedFormats.EAN_8,
+                    Html5QrcodeSupportedFormats.UPC_A,
+                    Html5QrcodeSupportedFormats.UPC_E,
+                    Html5QrcodeSupportedFormats.CODE_128,
+                    Html5QrcodeSupportedFormats.CODE_39
+                ]
             });
         }
         
-        Html5Qrcode.getCameras().then(devices => {
-            if (devices && devices.length) {
-                html5QrCode.start(
-                    { 
-                        facingMode: "environment",
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
-                    },
-                    {
-                        fps: 30,
-                        disableFlip: false
-                    },
-                    (decodedText, decodedResult) => {
-                        closeScannerModal();
-                        document.getElementById('search-input').value = decodedText;
-                        searchByBarcode(decodedText);
-                    },
-                    (errorMessage) => { }
-                ).catch(err => {
-                    closeScannerModal();
-                    showToast("No se pudo iniciar la cámara.");
-                });
-            } else {
+        if (html5QrCode.isScanning) {
+            return;
+        }
+
+        html5QrCode.start(
+            { facingMode: "environment" },
+            {
+                fps: 30
+            },
+            (decodedText, decodedResult) => {
                 closeScannerModal();
-                showToast("No se encontraron cámaras.");
-            }
-        }).catch(err => {
+                document.getElementById('search-input').value = decodedText;
+                searchByBarcode(decodedText);
+            },
+            (errorMessage) => { }
+        ).catch(err => {
             closeScannerModal();
-            showToast("Debes conceder permisos de cámara.");
+            showToast("Error de cámara. Verifica los permisos.");
         });
     }
 
     function closeScannerModal() {
         document.getElementById('scanner-modal').classList.remove('open');
-        if (html5QrCode) {
+        if (html5QrCode && html5QrCode.isScanning) {
             html5QrCode.stop().then(() => {
                 html5QrCode.clear();
             }).catch(err => {
-                console.log("No se pudo detener el escáner", err);
+                console.log(err);
             });
         }
     }
