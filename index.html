@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tracker de Macros Avanzado</title>
+    <title>Tracker de Macros</title>
     <style>
         :root {
             --bg: #f4f4f5;
@@ -28,7 +28,6 @@
         input, select { padding: 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 1rem; }
         button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: var(--radius); font-size: 1rem; cursor: pointer; font-weight: bold; }
         button:hover { opacity: 0.9; }
-        .btn-secondary { background: var(--text-muted); }
 
         .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center; }
         .stat-box { padding: 10px; background: var(--bg); border-radius: var(--radius); }
@@ -59,7 +58,7 @@
 
 <div class="container">
     <div class="card">
-        <h2>Calculadora de Objetivos (Mifflin-St Jeor)</h2>
+        <h2>Calculadora de Objetivos</h2>
         <form id="calc-form" class="form-grid">
             <div class="form-group">
                 <label>Sexo</label>
@@ -132,7 +131,7 @@
     </div>
 
     <div class="card">
-        <h2>Buscar Alimento (OpenFoodFacts)</h2>
+        <h2>Buscar Alimento</h2>
         <div style="display: flex; gap: 10px;">
             <input type="text" id="search-input" placeholder="Ej. Pechuga de pollo, Avena...">
             <button type="button" onclick="searchFood()" style="width: auto;">Buscar</button>
@@ -150,7 +149,6 @@
     let goals = JSON.parse(localStorage.getItem('macroGoals')) || { cal: 2000, pro: 150, car: 200, fat: 65 };
     let entries = JSON.parse(localStorage.getItem('macroEntries')) || [];
 
-    // Calcular requerimientos
     document.getElementById('calc-form').addEventListener('submit', (e) => {
         e.preventDefault();
         
@@ -161,26 +159,23 @@
         const activity = parseFloat(document.getElementById('calc-activity').value);
         const goalModifier = parseFloat(document.getElementById('calc-goal').value);
 
-        // Ecuación de Mifflin-St Jeor
         let bmr = (10 * weight) + (6.25 * height) - (5 * age);
         bmr += (sex === 'm') ? 5 : -161;
 
         const tdee = Math.round((bmr * activity) + goalModifier);
         
-        // Distribución de macros (30% Proteína, 45% Carbohidratos, 25% Grasas)
         goals = {
             cal: tdee,
-            pro: Math.round((tdee * 0.30) / 4), // 4 kcal por gramo de proteína
-            car: Math.round((tdee * 0.45) / 4), // 4 kcal por gramo de carbohidrato
-            fat: Math.round((tdee * 0.25) / 9)  // 9 kcal por gramo de grasa
+            pro: Math.round((tdee * 0.30) / 4),
+            car: Math.round((tdee * 0.45) / 4),
+            fat: Math.round((tdee * 0.25) / 9)
         };
 
         localStorage.setItem('macroGoals', JSON.stringify(goals));
         updateUI();
-        alert('Metas actualizadas correctamente.');
+        alert('Metas actualizadas.');
     });
 
-    // Búsqueda en API
     async function searchFood() {
         const query = document.getElementById('search-input').value;
         if (!query) return;
@@ -189,9 +184,18 @@
         resultsContainer.innerHTML = 'Buscando...';
 
         try {
-            const res = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=5`);
-            const data = await res.json();
+            const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=5`;
             
+            // Si el problema persiste en GitHub Pages, puedes probar descomentando la siguiente línea para usar un proxy:
+            // const url = `https://corsproxy.io/?${encodeURIComponent('https://world.openfoodfacts.org/cgi/search.pl?search_terms=' + query + '&search_simple=1&action=process&json=1&page_size=5')}`;
+
+            const res = await fetch(url);
+
+            if (!res.ok) {
+                throw new Error(`HTTP: ${res.status}`);
+            }
+
+            const data = await res.json();
             resultsContainer.innerHTML = '';
             
             if (!data.products || data.products.length === 0) {
@@ -200,32 +204,32 @@
             }
 
             data.products.forEach(p => {
-                const name = p.product_name || 'Alimento desconocido';
+                const name = p.product_name || 'Desconocido';
                 const cal = p.nutriments['energy-kcal_100g'] || 0;
                 const pro = p.nutriments.proteins_100g || 0;
                 const car = p.nutriments.carbohydrates_100g || 0;
                 const fat = p.nutriments.fat_100g || 0;
 
-                const id = Math.random().toString(36).substr(2, 9);
+                const id = Math.random().toString(36).substring(2, 11);
                 
                 const item = document.createElement('div');
                 item.className = 'result-item';
                 item.innerHTML = `
                     <div class="result-header">${name}</div>
-                    <div class="result-macros">Por 100g: ${cal} kcal | P: ${pro}g | C: ${car}g | G: ${fat}g</div>
+                    <div class="result-macros">100g: ${cal} kcal | P: ${pro}g | C: ${car}g | G: ${fat}g</div>
                     <div class="result-actions">
                         <input type="number" id="grams-${id}" placeholder="Gramos" value="100" min="1">
-                        <button onclick="addApiFood('${name}', ${cal}, ${pro}, ${car}, ${fat}, '${id}')">Agregar</button>
+                        <button onclick="addApiFood('${name.replace(/'/g, "\\'")}', ${cal}, ${pro}, ${car}, ${fat}, '${id}')">Agregar</button>
                     </div>
                 `;
                 resultsContainer.appendChild(item);
             });
         } catch (error) {
-            resultsContainer.innerHTML = 'Error de conexión con la base de datos.';
+            console.error(error);
+            resultsContainer.innerHTML = `Error: ${error.message}`;
         }
     }
 
-    // Agregar alimento procesado
     window.addApiFood = function(name, cal100, pro100, car100, fat100, id) {
         const grams = parseFloat(document.getElementById(`grams-${id}`).value);
         if (isNaN(grams) || grams <= 0) return;
@@ -245,7 +249,6 @@
         updateUI();
     };
 
-    // UI Updates
     function updateUI() {
         const totals = entries.reduce((acc, curr) => ({
             cal: acc.cal + curr.cal,
@@ -254,25 +257,21 @@
             fat: acc.fat + curr.fat
         }), { cal: 0, pro: 0, car: 0, fat: 0 });
 
-        // Update Values
         document.getElementById('cal-val').textContent = totals.cal;
         document.getElementById('pro-val').textContent = totals.pro + 'g';
         document.getElementById('car-val').textContent = totals.car + 'g';
         document.getElementById('fat-val').textContent = totals.fat + 'g';
 
-        // Update Targets
         document.getElementById('cal-target').textContent = `/ ${goals.cal}`;
         document.getElementById('pro-target').textContent = `/ ${goals.pro}g`;
         document.getElementById('car-target').textContent = `/ ${goals.car}g`;
         document.getElementById('fat-target').textContent = `/ ${goals.fat}g`;
 
-        // Update Bars
         document.getElementById('cal-bar').style.width = Math.min((totals.cal / goals.cal) * 100, 100) + '%';
         document.getElementById('pro-bar').style.width = Math.min((totals.pro / goals.pro) * 100, 100) + '%';
         document.getElementById('car-bar').style.width = Math.min((totals.car / goals.car) * 100, 100) + '%';
         document.getElementById('fat-bar').style.width = Math.min((totals.fat / goals.fat) * 100, 100) + '%';
 
-        // Render List
         const listEl = document.getElementById('food-list');
         listEl.innerHTML = '';
         entries.forEach((entry, index) => {
