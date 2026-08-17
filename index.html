@@ -220,7 +220,6 @@
             height: 100% !important;
         }
         
-        /* Animación de línea de escaneo visual */
         .scan-line {
             position: absolute;
             top: 0; left: 0;
@@ -308,7 +307,7 @@
     </div>
     
     <div class="footer-version">
-        v2.1.0 | Reconocimiento ultra-rapido sin restricciones
+        v2.2.0 | API nativa y alta resolucion
     </div>
 </div>
 
@@ -977,7 +976,7 @@
             const canDelete = (currentTab === 'mine' || currentTab === 'recipes');
             const deleteHtml = canDelete ? `<div class="ns-item-delete" onclick="deleteSavedItem(event, '${id}', '${currentTab}')">X</div>` : '';
 
-            let desc = p.ingredients ? `Receta • ${p.ingredients.length} ingredientes` : `${brand}100 g`;
+            let desc = p.ingredients ? `Receta * ${p.ingredients.length} ingredientes` : `${brand}100 g`;
 
             item.innerHTML = `
                 <div class="ns-checkbox"></div>
@@ -1119,23 +1118,22 @@
         
         if (!html5QrCode) {
             html5QrCode = new Html5Qrcode("reader", {
-                formatsToSupport: [
-                    Html5QrcodeSupportedFormats.EAN_13,
-                    Html5QrcodeSupportedFormats.EAN_8,
-                    Html5QrcodeSupportedFormats.UPC_A,
-                    Html5QrcodeSupportedFormats.UPC_E,
-                    Html5QrcodeSupportedFormats.CODE_128,
-                    Html5QrcodeSupportedFormats.CODE_39
-                ]
+                experimentalFeatures: {
+                    useBarCodeDetectorIfSupported: true
+                }
             });
         }
         
         Html5Qrcode.getCameras().then(devices => {
             if (devices && devices.length) {
                 html5QrCode.start(
-                    { facingMode: "environment" },
+                    { 
+                        facingMode: "environment",
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    },
                     {
-                        fps: 60,
+                        fps: 30,
                         disableFlip: false
                     },
                     (decodedText, decodedResult) => {
@@ -1143,8 +1141,7 @@
                         document.getElementById('search-input').value = decodedText;
                         searchByBarcode(decodedText);
                     },
-                    (errorMessage) => {
-                    }
+                    (errorMessage) => { }
                 ).catch(err => {
                     closeScannerModal();
                     showToast("No se pudo iniciar la cámara.");
