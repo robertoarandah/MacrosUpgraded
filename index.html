@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tracker de Macros</title>
+    <!-- Librería para el escáner de código de barras -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         :root {
             --bg: #f4f4f5;
@@ -28,6 +30,7 @@
         input, select { padding: 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 1rem; }
         button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: var(--radius); font-size: 1rem; cursor: pointer; font-weight: bold; }
         button:hover { opacity: 0.9; }
+        .btn-secondary { background: var(--text-muted); }
 
         .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center; }
         .stat-box { padding: 10px; background: var(--bg); border-radius: var(--radius); }
@@ -52,6 +55,10 @@
         .food-name { font-weight: bold; }
         .food-macros { font-size: 0.85rem; color: var(--text-muted); }
         .delete-btn { color: #ef4444; cursor: pointer; border: none; background: none; font-size: 0.9rem; margin-left: 10px; font-weight: bold; }
+        
+        #reader { width: 100%; margin-top: 15px; display: none; }
+        
+        .footer { text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 20px 0; border-top: 1px solid var(--border); margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -133,9 +140,11 @@
     <div class="card">
         <h2>Buscar Alimento</h2>
         <div style="display: flex; gap: 10px;">
-            <input type="text" id="search-input" placeholder="Ej. Pechuga de pollo, Avena...">
+            <input type="text" id="search-input" placeholder="Nombre o código de barras">
             <button type="button" onclick="searchFood()" style="width: auto;">Buscar</button>
+            <button type="button" onclick="toggleScanner()" class="btn-secondary" style="width: auto;">Escanear</button>
         </div>
+        <div id="reader"></div>
         <div id="search-results" class="search-results"></div>
     </div>
 
@@ -143,11 +152,16 @@
         <h2>Alimentos Consumidos</h2>
         <ul class="food-list" id="food-list"></ul>
     </div>
+    
+    <div class="footer">
+        v1.1.0 | Último cambio: Se agregó lector de código de barras e integración con API por código
+    </div>
 </div>
 
 <script>
     let goals = JSON.parse(localStorage.getItem('macroGoals')) || { cal: 2000, pro: 150, car: 200, fat: 65 };
     let entries = JSON.parse(localStorage.getItem('macroEntries')) || [];
+    let html5QrcodeScanner = null;
 
     document.getElementById('calc-form').addEventListener('submit', (e) => {
         e.preventDefault();
@@ -185,15 +199,8 @@
 
         try {
             const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=5`;
-            
-            // Si el problema persiste en GitHub Pages, puedes probar descomentando la siguiente línea para usar un proxy:
-            // const url = `https://corsproxy.io/?${encodeURIComponent('https://world.openfoodfacts.org/cgi/search.pl?search_terms=' + query + '&search_simple=1&action=process&json=1&page_size=5')}`;
-
             const res = await fetch(url);
-
-            if (!res.ok) {
-                throw new Error(`HTTP: ${res.status}`);
-            }
+            if (!res.ok) throw new Error(`HTTP: ${res.status}`);
 
             const data = await res.json();
             resultsContainer.innerHTML = '';
@@ -203,31 +210,59 @@
                 return;
             }
 
-            data.products.forEach(p => {
-                const name = p.product_name || 'Desconocido';
-                const cal = p.nutriments['energy-kcal_100g'] || 0;
-                const pro = p.nutriments.proteins_100g || 0;
-                const car = p.nutriments.carbohydrates_100g || 0;
-                const fat = p.nutriments.fat_100g || 0;
-
-                const id = Math.random().toString(36).substring(2, 11);
-                
-                const item = document.createElement('div');
-                item.className = 'result-item';
-                item.innerHTML = `
-                    <div class="result-header">${name}</div>
-                    <div class="result-macros">100g: ${cal} kcal | P: ${pro}g | C: ${car}g | G: ${fat}g</div>
-                    <div class="result-actions">
-                        <input type="number" id="grams-${id}" placeholder="Gramos" value="100" min="1">
-                        <button onclick="addApiFood('${name.replace(/'/g, "\\'")}', ${cal}, ${pro}, ${car}, ${fat}, '${id}')">Agregar</button>
-                    </div>
-                `;
-                resultsContainer.appendChild(item);
-            });
+            renderProducts(data.products, resultsContainer);
         } catch (error) {
             console.error(error);
             resultsContainer.innerHTML = `Error: ${error.message}`;
         }
+    }
+
+    async function searchByBarcode(barcode) {
+        const resultsContainer = document.getElementById('search-results');
+        resultsContainer.innerHTML = `Buscando código: ${barcode}...`;
+        
+        try {
+            const url = `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP: ${res.status}`);
+
+            const data = await res.json();
+            resultsContainer.innerHTML = '';
+
+            if (data.status !== 1) {
+                resultsContainer.innerHTML = 'Producto no encontrado en la base de datos.';
+                return;
+            }
+
+            renderProducts([data.product], resultsContainer);
+        } catch (error) {
+            console.error(error);
+            resultsContainer.innerHTML = `Error: ${error.message}`;
+        }
+    }
+
+    function renderProducts(products, container) {
+        products.forEach(p => {
+            const name = p.product_name || 'Desconocido';
+            const cal = p.nutriments['energy-kcal_100g'] || 0;
+            const pro = p.nutriments.proteins_100g || 0;
+            const car = p.nutriments.carbohydrates_100g || 0;
+            const fat = p.nutriments.fat_100g || 0;
+
+            const id = Math.random().toString(36).substring(2, 11);
+            
+            const item = document.createElement('div');
+            item.className = 'result-item';
+            item.innerHTML = `
+                <div class="result-header">${name}</div>
+                <div class="result-macros">100g: ${cal} kcal | P: ${pro}g | C: ${car}g | G: ${fat}g</div>
+                <div class="result-actions">
+                    <input type="number" id="grams-${id}" placeholder="Gramos" value="100" min="1">
+                    <button onclick="addApiFood('${name.replace(/'/g, "\\'")}', ${cal}, ${pro}, ${car}, ${fat}, '${id}')">Agregar</button>
+                </div>
+            `;
+            container.appendChild(item);
+        });
     }
 
     window.addApiFood = function(name, cal100, pro100, car100, fat100, id) {
@@ -248,6 +283,37 @@
         document.getElementById('search-input').value = '';
         updateUI();
     };
+
+    function toggleScanner() {
+        const readerDiv = document.getElementById('reader');
+        if (readerDiv.style.display === 'none') {
+            readerDiv.style.display = 'block';
+            if (!html5QrcodeScanner) {
+                html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
+                html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+            }
+        } else {
+            closeScanner();
+        }
+    }
+
+    function closeScanner() {
+        const readerDiv = document.getElementById('reader');
+        readerDiv.style.display = 'none';
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.clear();
+            html5QrcodeScanner = null;
+        }
+    }
+
+    function onScanSuccess(decodedText, decodedResult) {
+        closeScanner();
+        searchByBarcode(decodedText);
+    }
+
+    function onScanFailure(error) {
+        // Fallos continuos de lectura mientras se escanea
+    }
 
     function updateUI() {
         const totals = entries.reduce((acc, curr) => ({
