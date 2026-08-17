@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tracker de Macros</title>
+    <title>Tracker de Macros Avanzado</title>
     <style>
         :root {
             --bg: #f4f4f5;
@@ -20,19 +20,32 @@
         .card { background: var(--surface); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border); }
         h2 { font-size: 1.2rem; margin-bottom: 15px; }
         
-        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center; }
-        .stat-box { padding: 10px; background: var(--bg); border-radius: var(--radius); }
-        .stat-value { font-size: 1.5rem; font-weight: bold; margin-bottom: 5px; }
-        .stat-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+        .form-group-full { grid-column: span 2; }
         
-        .progress-bar { height: 6px; background: var(--border); border-radius: 3px; margin-top: 10px; overflow: hidden; }
-        .progress-fill { height: 100%; background: var(--primary); transition: width 0.3s ease; }
-        
-        .form-group { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-        input { flex: 1; min-width: 80px; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 1rem; }
-        input[type="text"] { min-width: 100%; }
+        label { font-size: 0.85rem; font-weight: bold; color: var(--text-muted); }
+        input, select { padding: 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 1rem; }
         button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: var(--radius); font-size: 1rem; cursor: pointer; font-weight: bold; }
         button:hover { opacity: 0.9; }
+        .btn-secondary { background: var(--text-muted); }
+
+        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center; }
+        .stat-box { padding: 10px; background: var(--bg); border-radius: var(--radius); }
+        .stat-value { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; }
+        .stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
+        .stat-target { font-size: 0.7rem; color: var(--primary); margin-top: 5px; }
+        
+        .progress-bar { height: 6px; background: var(--border); border-radius: 3px; margin-top: 5px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--primary); transition: width 0.3s ease; }
+        
+        .search-results { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .result-item { border: 1px solid var(--border); padding: 10px; border-radius: var(--radius); display: flex; flex-direction: column; gap: 10px; }
+        .result-header { font-weight: bold; }
+        .result-macros { font-size: 0.85rem; color: var(--text-muted); }
+        .result-actions { display: flex; gap: 10px; }
+        .result-actions input { flex: 1; }
+        .result-actions button { width: auto; }
 
         .food-list { list-style: none; }
         .food-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
@@ -46,67 +59,194 @@
 
 <div class="container">
     <div class="card">
-        <h2>Resumen Diario</h2>
+        <h2>Calculadora de Objetivos (Mifflin-St Jeor)</h2>
+        <form id="calc-form" class="form-grid">
+            <div class="form-group">
+                <label>Sexo</label>
+                <select id="calc-sex" required>
+                    <option value="m">Masculino</option>
+                    <option value="f">Femenino</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Edad</label>
+                <input type="number" id="calc-age" required min="15" max="100">
+            </div>
+            <div class="form-group">
+                <label>Peso (kg)</label>
+                <input type="number" id="calc-weight" step="0.1" required min="30">
+            </div>
+            <div class="form-group">
+                <label>Altura (cm)</label>
+                <input type="number" id="calc-height" required min="100">
+            </div>
+            <div class="form-group form-group-full">
+                <label>Actividad Física</label>
+                <select id="calc-activity" required>
+                    <option value="1.2">Sedentario (Poco o nulo ejercicio)</option>
+                    <option value="1.375">Ligero (Ejercicio 1-3 días/semana)</option>
+                    <option value="1.55">Moderado (Ejercicio 3-5 días/semana)</option>
+                    <option value="1.725">Activo (Ejercicio 6-7 días/semana)</option>
+                </select>
+            </div>
+            <div class="form-group form-group-full">
+                <label>Objetivo</label>
+                <select id="calc-goal" required>
+                    <option value="-500">Perder peso (Déficit calórico)</option>
+                    <option value="0">Mantener peso</option>
+                    <option value="500">Ganar masa muscular (Superávit)</option>
+                </select>
+            </div>
+            <button type="submit" class="form-group-full">Calcular y Guardar Metas</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Progreso Diario</h2>
         <div class="summary-grid">
             <div class="stat-box">
                 <div class="stat-value" id="cal-val">0</div>
                 <div class="stat-label">Kcal</div>
                 <div class="progress-bar"><div class="progress-fill" id="cal-bar" style="width: 0%"></div></div>
+                <div class="stat-target" id="cal-target">/ 0</div>
             </div>
             <div class="stat-box">
                 <div class="stat-value" id="pro-val">0g</div>
                 <div class="stat-label">Prot</div>
                 <div class="progress-bar"><div class="progress-fill" id="pro-bar" style="width: 0%"></div></div>
+                <div class="stat-target" id="pro-target">/ 0g</div>
             </div>
             <div class="stat-box">
                 <div class="stat-value" id="car-val">0g</div>
                 <div class="stat-label">Carb</div>
                 <div class="progress-bar"><div class="progress-fill" id="car-bar" style="width: 0%"></div></div>
+                <div class="stat-target" id="car-target">/ 0g</div>
             </div>
             <div class="stat-box">
                 <div class="stat-value" id="fat-val">0g</div>
                 <div class="stat-label">Grasa</div>
                 <div class="progress-bar"><div class="progress-fill" id="fat-bar" style="width: 0%"></div></div>
+                <div class="stat-target" id="fat-target">/ 0g</div>
             </div>
         </div>
     </div>
 
     <div class="card">
-        <h2>Agregar Alimento</h2>
-        <form id="food-form">
-            <div class="form-group">
-                <input type="text" id="food-name" placeholder="Nombre del alimento" required>
-            </div>
-            <div class="form-group">
-                <input type="number" id="food-cal" placeholder="Kcal" required min="0">
-                <input type="number" id="food-pro" placeholder="Prot (g)" required min="0">
-                <input type="number" id="food-car" placeholder="Carb (g)" required min="0">
-                <input type="number" id="food-fat" placeholder="Grasa (g)" required min="0">
-            </div>
-            <button type="submit">Registrar</button>
-        </form>
+        <h2>Buscar Alimento (OpenFoodFacts)</h2>
+        <div style="display: flex; gap: 10px;">
+            <input type="text" id="search-input" placeholder="Ej. Pechuga de pollo, Avena...">
+            <button type="button" onclick="searchFood()" style="width: auto;">Buscar</button>
+        </div>
+        <div id="search-results" class="search-results"></div>
     </div>
 
     <div class="card">
-        <h2>Registro</h2>
-        <ul class="food-list" id="food-list">
-            <!-- Inyección dinámica mediante JS -->
-        </ul>
+        <h2>Alimentos Consumidos</h2>
+        <ul class="food-list" id="food-list"></ul>
     </div>
 </div>
 
 <script>
-    // Metas diarias (modificables según la lógica que desees implementar después)
-    const GOALS = { cal: 2000, pro: 150, car: 200, fat: 65 };
-    
-    // Inicialización del estado mediante LocalStorage
+    let goals = JSON.parse(localStorage.getItem('macroGoals')) || { cal: 2000, pro: 150, car: 200, fat: 65 };
     let entries = JSON.parse(localStorage.getItem('macroEntries')) || [];
 
-    const form = document.getElementById('food-form');
-    const listEl = document.getElementById('food-list');
+    // Calcular requerimientos
+    document.getElementById('calc-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const sex = document.getElementById('calc-sex').value;
+        const weight = parseFloat(document.getElementById('calc-weight').value);
+        const height = parseFloat(document.getElementById('calc-height').value);
+        const age = parseFloat(document.getElementById('calc-age').value);
+        const activity = parseFloat(document.getElementById('calc-activity').value);
+        const goalModifier = parseFloat(document.getElementById('calc-goal').value);
 
+        // Ecuación de Mifflin-St Jeor
+        let bmr = (10 * weight) + (6.25 * height) - (5 * age);
+        bmr += (sex === 'm') ? 5 : -161;
+
+        const tdee = Math.round((bmr * activity) + goalModifier);
+        
+        // Distribución de macros (30% Proteína, 45% Carbohidratos, 25% Grasas)
+        goals = {
+            cal: tdee,
+            pro: Math.round((tdee * 0.30) / 4), // 4 kcal por gramo de proteína
+            car: Math.round((tdee * 0.45) / 4), // 4 kcal por gramo de carbohidrato
+            fat: Math.round((tdee * 0.25) / 9)  // 9 kcal por gramo de grasa
+        };
+
+        localStorage.setItem('macroGoals', JSON.stringify(goals));
+        updateUI();
+        alert('Metas actualizadas correctamente.');
+    });
+
+    // Búsqueda en API
+    async function searchFood() {
+        const query = document.getElementById('search-input').value;
+        if (!query) return;
+
+        const resultsContainer = document.getElementById('search-results');
+        resultsContainer.innerHTML = 'Buscando...';
+
+        try {
+            const res = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=5`);
+            const data = await res.json();
+            
+            resultsContainer.innerHTML = '';
+            
+            if (!data.products || data.products.length === 0) {
+                resultsContainer.innerHTML = 'No se encontraron resultados.';
+                return;
+            }
+
+            data.products.forEach(p => {
+                const name = p.product_name || 'Alimento desconocido';
+                const cal = p.nutriments['energy-kcal_100g'] || 0;
+                const pro = p.nutriments.proteins_100g || 0;
+                const car = p.nutriments.carbohydrates_100g || 0;
+                const fat = p.nutriments.fat_100g || 0;
+
+                const id = Math.random().toString(36).substr(2, 9);
+                
+                const item = document.createElement('div');
+                item.className = 'result-item';
+                item.innerHTML = `
+                    <div class="result-header">${name}</div>
+                    <div class="result-macros">Por 100g: ${cal} kcal | P: ${pro}g | C: ${car}g | G: ${fat}g</div>
+                    <div class="result-actions">
+                        <input type="number" id="grams-${id}" placeholder="Gramos" value="100" min="1">
+                        <button onclick="addApiFood('${name}', ${cal}, ${pro}, ${car}, ${fat}, '${id}')">Agregar</button>
+                    </div>
+                `;
+                resultsContainer.appendChild(item);
+            });
+        } catch (error) {
+            resultsContainer.innerHTML = 'Error de conexión con la base de datos.';
+        }
+    }
+
+    // Agregar alimento procesado
+    window.addApiFood = function(name, cal100, pro100, car100, fat100, id) {
+        const grams = parseFloat(document.getElementById(`grams-${id}`).value);
+        if (isNaN(grams) || grams <= 0) return;
+
+        const multiplier = grams / 100;
+        
+        entries.push({
+            name: `${name} (${grams}g)`,
+            cal: Math.round(cal100 * multiplier),
+            pro: Math.round(pro100 * multiplier),
+            car: Math.round(car100 * multiplier),
+            fat: Math.round(fat100 * multiplier)
+        });
+
+        document.getElementById('search-results').innerHTML = '';
+        document.getElementById('search-input').value = '';
+        updateUI();
+    };
+
+    // UI Updates
     function updateUI() {
-        // Reducción del array para obtener los sumatorios
         const totals = entries.reduce((acc, curr) => ({
             cal: acc.cal + curr.cal,
             pro: acc.pro + curr.pro,
@@ -114,19 +254,26 @@
             fat: acc.fat + curr.fat
         }), { cal: 0, pro: 0, car: 0, fat: 0 });
 
-        // Actualización del DOM (valores numéricos)
+        // Update Values
         document.getElementById('cal-val').textContent = totals.cal;
         document.getElementById('pro-val').textContent = totals.pro + 'g';
         document.getElementById('car-val').textContent = totals.car + 'g';
         document.getElementById('fat-val').textContent = totals.fat + 'g';
 
-        // Actualización de los anchos de las barras de progreso limitados al 100%
-        document.getElementById('cal-bar').style.width = Math.min((totals.cal / GOALS.cal) * 100, 100) + '%';
-        document.getElementById('pro-bar').style.width = Math.min((totals.pro / GOALS.pro) * 100, 100) + '%';
-        document.getElementById('car-bar').style.width = Math.min((totals.car / GOALS.car) * 100, 100) + '%';
-        document.getElementById('fat-bar').style.width = Math.min((totals.fat / GOALS.fat) * 100, 100) + '%';
+        // Update Targets
+        document.getElementById('cal-target').textContent = `/ ${goals.cal}`;
+        document.getElementById('pro-target').textContent = `/ ${goals.pro}g`;
+        document.getElementById('car-target').textContent = `/ ${goals.car}g`;
+        document.getElementById('fat-target').textContent = `/ ${goals.fat}g`;
 
-        // Renderizado de la lista
+        // Update Bars
+        document.getElementById('cal-bar').style.width = Math.min((totals.cal / goals.cal) * 100, 100) + '%';
+        document.getElementById('pro-bar').style.width = Math.min((totals.pro / goals.pro) * 100, 100) + '%';
+        document.getElementById('car-bar').style.width = Math.min((totals.car / goals.car) * 100, 100) + '%';
+        document.getElementById('fat-bar').style.width = Math.min((totals.fat / goals.fat) * 100, 100) + '%';
+
+        // Render List
+        const listEl = document.getElementById('food-list');
         listEl.innerHTML = '';
         entries.forEach((entry, index) => {
             const li = document.createElement('li');
@@ -141,35 +288,14 @@
             listEl.appendChild(li);
         });
 
-        // Sincronización con LocalStorage
         localStorage.setItem('macroEntries', JSON.stringify(entries));
     }
 
-    // Manejador del formulario
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        
-        const newEntry = {
-            name: document.getElementById('food-name').value,
-            cal: parseInt(document.getElementById('food-cal').value),
-            pro: parseInt(document.getElementById('food-pro').value),
-            car: parseInt(document.getElementById('food-car').value),
-            fat: parseInt(document.getElementById('food-fat').value)
-        };
-
-        entries.push(newEntry);
-        form.reset();
-        document.getElementById('food-name').focus();
-        updateUI();
-    });
-
-    // Función global para permitir la ejecución desde el DOM dinámico
     window.deleteEntry = function(index) {
         entries.splice(index, 1);
         updateUI();
     };
 
-    // Render inicial
     updateUI();
 </script>
 
