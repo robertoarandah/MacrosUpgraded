@@ -1228,36 +1228,45 @@
     }
 
     // INTERCEPTAR DATOS DEL ATAJO DE APPLE
+   // INTERCEPTAR DATOS DEL ATAJO DE APPLE
     function checkShortcutData() {
         const params = new URLSearchParams(window.location.search);
-        const data = params.get('data');
+        let data = params.get('data');
         
         if (data) {
             try {
-                const parsed = JSON.parse(decodeURIComponent(data));
+                // Atajos de Apple elimina las comas al convertir una lista a texto en la URL.
+                // Esta expresión regular repara el formato JSON automáticamente uniendo } y { con una coma.
+                data = data.replace(/}\s*{/g, '},{');
+                
+                let parsed = JSON.parse(data);
+                
+                // Si el atajo lo manda como un solo diccionario, lo forzamos a ser una lista
+                if (!Array.isArray(parsed)) {
+                    parsed = [parsed];
+                }
                 
                 let targetMeal = 'desayuno';
                 const hour = new Date().getHours();
                 if (hour >= 12 && hour < 18) targetMeal = 'almuerzo';
                 else if (hour >= 18) targetMeal = 'cena';
 
-                if (Array.isArray(parsed)) {
-                    parsed.forEach(item => {
-                        const newEntry = {
-                            id: Date.now() + Math.floor(Math.random() * 1000),
-                            meal: targetMeal,
-                            name: item.name || 'Alimento IA',
-                            cal: Math.round(item.cal || 0),
-                            pro: Math.round(item.pro || 0),
-                            car: Math.round(item.car || 0),
-                            fat: Math.round(item.fat || 0)
-                        };
-                        entries.push(newEntry);
-                    });
-                    
-                    saveData();
-                    showToast('Alimentos añadidos por IA');
-                }
+                parsed.forEach(item => {
+                    const newEntry = {
+                        id: Date.now() + Math.floor(Math.random() * 1000),
+                        meal: targetMeal,
+                        name: item.name || 'Alimento IA',
+                        cal: Math.round(item.cal || 0),
+                        pro: Math.round(item.pro || 0),
+                        car: Math.round(item.car || 0),
+                        fat: Math.round(item.fat || 0)
+                    };
+                    entries.push(newEntry);
+                });
+                
+                saveData();
+                showToast('✓ Añadido por IA');
+                
             } catch (e) {
                 console.error("Error parseando datos del atajo", e);
                 showToast('Error al leer datos de la IA');
@@ -1265,7 +1274,7 @@
             
             const url = new URL(window.location);
             url.searchParams.delete('data');
-            window.history.replaceState({}, document.title, url);
+            window.history.replaceState({}, document.title, url.toString());
         }
     }
     
