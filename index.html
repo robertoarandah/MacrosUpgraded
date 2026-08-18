@@ -1227,21 +1227,28 @@
         document.getElementById('top-fat-bar').style.width = pFat + '%';
     }
 
-    // INTERCEPTAR DATOS DEL ATAJO DE APPLE
-   // INTERCEPTAR DATOS DEL ATAJO DE APPLE
+  // INTERCEPTAR DATOS DEL ATAJO DE APPLE
     function checkShortcutData() {
         const params = new URLSearchParams(window.location.search);
         let data = params.get('data');
         
         if (data) {
             try {
-                // Atajos de Apple elimina las comas al convertir una lista a texto en la URL.
-                // Esta expresión regular repara el formato JSON automáticamente uniendo } y { con una coma.
+                // 1. Limpieza extrema del formato para iOS / Atajos
+                data = data.trim();
+                
+                // 2. Asegurar que sea una lista (array) por si faltan los corchetes
+                if (!data.startsWith('[')) data = '[' + data;
+                if (!data.endsWith(']')) data = data + ']';
+                
+                // 3. Reparar saltos de línea sin coma (el error que daba Atajos)
                 data = data.replace(/}\s*{/g, '},{');
+                
+                // 4. Convertir comillas tipográficas de iOS a comillas normales
+                data = data.replace(/[“”]/g, '"');
                 
                 let parsed = JSON.parse(data);
                 
-                // Si el atajo lo manda como un solo diccionario, lo forzamos a ser una lista
                 if (!Array.isArray(parsed)) {
                     parsed = [parsed];
                 }
@@ -1265,16 +1272,17 @@
                 });
                 
                 saveData();
-                showToast('✓ Añadido por IA');
+                showToast('✓ Añadidos por IA');
                 
             } catch (e) {
+                // Si falla, esta alerta te mostrará el código exacto que está chocando
+                alert("Debug - Error de formato. El JSON que llegó es:\n\n" + data);
                 console.error("Error parseando datos del atajo", e);
                 showToast('Error al leer datos de la IA');
             }
             
-            const url = new URL(window.location);
-            url.searchParams.delete('data');
-            window.history.replaceState({}, document.title, url.toString());
+            // Limpia la URL usando pathname para borrar por completo el parámetro y evitar crashes
+            window.history.replaceState({}, document.title, window.location.pathname);
         }
     }
     
