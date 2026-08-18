@@ -970,4 +970,307 @@
             const openQty = () => {
                 const sourceTab = currentTab;
                 item.classList.add('ns-item-tap');
-                setTimeout(() => openQuantityModal(name, cal, pro, car, fat, sourceTab), 1
+                setTimeout(() => openQuantityModal(name, cal, pro, car, fat, sourceTab), 130);
+            };
+
+            const canDelete = (currentTab === 'mine' || currentTab === 'recipes');
+            const deleteHtml = canDelete ? `<div class="ns-item-delete" onclick="deleteSavedItem(event, '${id}', '${currentTab}')">X</div>` : '';
+
+            let desc = p.ingredients ? `Receta * ${p.ingredients.length} ingredientes` : `${brand}100 g`;
+
+            item.innerHTML = `
+                <div class="ns-checkbox"></div>
+                <div class="ns-item-info">
+                    <div class="ns-item-name">${name}</div>
+                    <div class="ns-item-desc">${desc}</div>
+                </div>
+                <div class="ns-item-stats">
+                    <div class="ns-item-cal">${Math.round(cal)}</div>
+                    <div class="ns-item-macros">
+                        C: <span class="ns-m-carb">${parseFloat(car).toFixed(1)}</span> 
+                        P: <span class="ns-m-pro">${parseFloat(pro).toFixed(1)}</span> 
+                        G: <span class="ns-m-fat">${parseFloat(fat).toFixed(1)}</span>
+                    </div>
+                </div>
+                ${deleteHtml}
+            `;
+            item.addEventListener('click', openQty);
+            container.appendChild(item);
+        });
+    }
+
+    let pendingFood = null; 
+
+    function openQuantityModal(name, cal100, pro100, car100, fat100, sourceTab) {
+        pendingFood = { name, cal100, pro100, car100, fat100, sourceTab: sourceTab || currentTab };
+
+        document.getElementById('qty-food-name').textContent = name;
+        document.getElementById('qty-food-base').textContent = `${Math.round(cal100)} kcal por 100 g`;
+        document.getElementById('qty-grams').value = 100;
+
+        document.querySelectorAll('.qty-quick-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.qty-quick-btn')[1].classList.add('active');
+
+        updateQtyPreview();
+        openModalAnim('quantity-modal');
+    }
+
+    function setQtyGrams(g) {
+        document.getElementById('qty-grams').value = g;
+        document.querySelectorAll('.qty-quick-btn').forEach(b => {
+            b.classList.toggle('active', parseInt(b.textContent) === g);
+        });
+        updateQtyPreview();
+    }
+
+    function updateQtyPreview() {
+        if (!pendingFood) return;
+        const grams = parseFloat(document.getElementById('qty-grams').value) || 0;
+        const m = grams / 100;
+
+        document.querySelectorAll('.qty-quick-btn').forEach(b => {
+            b.classList.toggle('active', parseInt(b.textContent) === grams);
+        });
+
+        const values = {
+            'qty-prev-cal': Math.round(pendingFood.cal100 * m),
+            'qty-prev-car': (pendingFood.car100 * m).toFixed(1) + ' g',
+            'qty-prev-pro': (pendingFood.pro100 * m).toFixed(1) + ' g',
+            'qty-prev-fat': (pendingFood.fat100 * m).toFixed(1) + ' g'
+        };
+        Object.entries(values).forEach(([id, val]) => {
+            const el = document.getElementById(id);
+            el.textContent = val;
+            el.classList.remove('qty-pulse');
+            void el.offsetWidth;
+            el.classList.add('qty-pulse');
+        });
+    }
+
+    function confirmAddFood() {
+        if (!pendingFood) return;
+        const grams = parseFloat(document.getElementById('qty-grams').value);
+        if (isNaN(grams) || grams <= 0) { showToast('Ingresa una cantidad válida.'); return; }
+
+        const multiplier = grams / 100;
+
+        if (currentMealTarget === 'recipe') {
+            draftRecipe.ingredients.push({
+                name: pendingFood.name,
+                grams: grams,
+                cal: pendingFood.cal100 * multiplier,
+                pro: pendingFood.pro100 * multiplier,
+                car: pendingFood.car100 * multiplier,
+                fat: pendingFood.fat100 * multiplier
+            });
+            updateRecipeBuilderUI();
+            closeModalAnim('quantity-modal');
+            closeModalAnim('search-modal');
+            pendingFood = null;
+            return;
+        }
+
+        const newEntry = {
+            id: Date.now(),
+            meal: currentMealTarget,
+            name: `${pendingFood.name} (${grams}g)`,
+            cal: Math.round(pendingFood.cal100 * multiplier),
+            pro: Math.round(pendingFood.pro100 * multiplier),
+            car: Math.round(pendingFood.car100 * multiplier),
+            fat: Math.round(pendingFood.fat100 * multiplier)
+        };
+        entries.push(newEntry);
+        justAddedEntryId = newEntry.id;
+
+        let savedToMine = false;
+        if (pendingFood.sourceTab === 'library') {
+            const alreadySaved = customFoods.some(f => f.product_name === pendingFood.name);
+            if (!alreadySaved) {
+                customFoods.push({
+                    id: 'used_' + Date.now(),
+                    product_name: pendingFood.name,
+                    code: '',
+                    nutriments: {
+                        'energy-kcal_100g': Math.round(pendingFood.cal100),
+                        'proteins_100g': pendingFood.pro100,
+                        'carbohydrates_100g': pendingFood.car100,
+                        'fat_100g': pendingFood.fat100
+                    }
+                });
+                savedToMine = true;
+            }
+        }
+
+        pendingFood = null;
+        saveData();
+        closeModalAnim('quantity-modal');
+        closeModalAnim('search-modal');
+        updateUI();
+        const mealLabel = currentMealTarget.charAt(0).toUpperCase() + currentMealTarget.slice(1);
+        showToast(savedToMine ? `Exito: Añadido a ${mealLabel} y guardado en Mis alimentos` : `Exito: Añadido a ${mealLabel}`);
+    }
+    
+    function toggleScanner() {
+        if (currentTab !== 'library') {
+            switchTab('library');
+        }
+        document.getElementById('scanner-modal').classList.add('open');
+        
+        if (!html5QrCode) {
+            html5QrCode = new Html5Qrcode("reader", {
+                formatsToSupport: [
+                    Html5QrcodeSupportedFormats.EAN_13,
+                    Html5QrcodeSupportedFormats.EAN_8,
+                    Html5QrcodeSupportedFormats.UPC_A,
+                    Html5QrcodeSupportedFormats.UPC_E,
+                    Html5QrcodeSupportedFormats.CODE_128,
+                    Html5QrcodeSupportedFormats.CODE_39
+                ]
+            });
+        }
+        
+        if (html5QrCode.isScanning) {
+            return;
+        }
+
+        html5QrCode.start(
+            { facingMode: "environment" },
+            {
+                fps: 30
+            },
+            (decodedText, decodedResult) => {
+                closeScannerModal();
+                document.getElementById('search-input').value = decodedText;
+                searchByBarcode(decodedText);
+            },
+            (errorMessage) => { }
+        ).catch(err => {
+            closeScannerModal();
+            showToast("Error de cámara. Verifica los permisos.");
+        });
+    }
+
+    function closeScannerModal() {
+        document.getElementById('scanner-modal').classList.remove('open');
+        if (html5QrCode && html5QrCode.isScanning) {
+            html5QrCode.stop().then(() => {
+                html5QrCode.clear();
+            }).catch(err => {
+                console.log(err);
+            });
+        }
+    }
+
+    window.deleteEntry = function(id, btnEl) {
+        const li = btnEl ? btnEl.closest('.food-item') : null;
+        if (li) {
+            li.classList.add('removing');
+            setTimeout(() => {
+                entries = entries.filter(e => e.id !== id);
+                saveData();
+                updateUI();
+            }, 210);
+        } else {
+            entries = entries.filter(e => e.id !== id);
+            saveData();
+            updateUI();
+        }
+    };
+
+    function updateUI() {
+        const meals = ['desayuno', 'almuerzo', 'cena'];
+        let totals = { cal: 0, pro: 0, car: 0, fat: 0 };
+        
+        meals.forEach(meal => {
+            const mealEntries = entries.filter(e => e.meal === meal);
+            const list = document.getElementById(`list-${meal}`);
+            list.innerHTML = '';
+            
+            let mCal = 0, mPro = 0, mCar = 0, mFat = 0;
+            
+            mealEntries.forEach(e => {
+                mCal += e.cal; mPro += e.pro; mCar += e.car; mFat += e.fat;
+                
+                const li = document.createElement('li');
+                li.className = 'food-item' + (e.id === justAddedEntryId ? ' food-item-new' : '');
+                li.innerHTML = `
+                    <div style="flex: 1;">
+                        <div style="font-weight: 500;">${e.name}</div>
+                        <div class="food-macros-text">${e.cal} kcal | P: ${e.pro}g | C: ${e.car}g | G: ${e.fat}g</div>
+                    </div>
+                    <button class="delete-btn" onclick="deleteEntry(${e.id}, this)">X</button>
+                `;
+                list.appendChild(li);
+            });
+            
+            document.getElementById(`${meal}-cal`).textContent = mCal;
+            document.getElementById(`${meal}-carb`).textContent = mCar + 'g';
+            document.getElementById(`${meal}-pro`).textContent = mPro + 'g';
+            document.getElementById(`${meal}-fat`).textContent = mFat + 'g';
+            
+            totals.cal += mCal; totals.pro += mPro; totals.car += mCar; totals.fat += mFat;
+        });
+
+        justAddedEntryId = null;
+        
+        document.getElementById('top-cal-text').textContent = `${totals.cal} / ${goals.cal} kcal`;
+        document.getElementById('top-carb-text').textContent = `${totals.car} / ${goals.car} g`;
+        document.getElementById('top-pro-text').textContent = `${totals.pro} / ${goals.pro} g`;
+        document.getElementById('top-fat-text').textContent = `${totals.fat} / ${goals.fat} g`;
+        
+        const pCarb = Math.min(100, (totals.car / (goals.car || 1)) * 100);
+        const pPro = Math.min(100, (totals.pro / (goals.pro || 1)) * 100);
+        const pFat = Math.min(100, (totals.fat / (goals.fat || 1)) * 100);
+        
+        document.getElementById('top-carb-bar').style.width = pCarb + '%';
+        document.getElementById('top-pro-bar').style.width = pPro + '%';
+        document.getElementById('top-fat-bar').style.width = pFat + '%';
+    }
+
+    // INTERCEPTAR DATOS DEL ATAJO DE APPLE
+    function checkShortcutData() {
+        const params = new URLSearchParams(window.location.search);
+        const data = params.get('data');
+        
+        if (data) {
+            try {
+                const parsed = JSON.parse(decodeURIComponent(data));
+                
+                let targetMeal = 'desayuno';
+                const hour = new Date().getHours();
+                if (hour >= 12 && hour < 18) targetMeal = 'almuerzo';
+                else if (hour >= 18) targetMeal = 'cena';
+
+                if (Array.isArray(parsed)) {
+                    parsed.forEach(item => {
+                        const newEntry = {
+                            id: Date.now() + Math.floor(Math.random() * 1000),
+                            meal: targetMeal,
+                            name: item.name || 'Alimento IA',
+                            cal: Math.round(item.cal || 0),
+                            pro: Math.round(item.pro || 0),
+                            car: Math.round(item.car || 0),
+                            fat: Math.round(item.fat || 0)
+                        };
+                        entries.push(newEntry);
+                    });
+                    
+                    saveData();
+                    showToast('Alimentos añadidos por IA');
+                }
+            } catch (e) {
+                console.error("Error parseando datos del atajo", e);
+                showToast('Error al leer datos de la IA');
+            }
+            
+            const url = new URL(window.location);
+            url.searchParams.delete('data');
+            window.history.replaceState({}, document.title, url);
+        }
+    }
+    
+    checkShortcutData();
+    updateUI();
+</script>
+</body>
+</html>
