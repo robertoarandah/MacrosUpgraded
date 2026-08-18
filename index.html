@@ -56,12 +56,14 @@
         .ms-cal { color: var(--color-pro); }
         
         .food-list { list-style: none; margin-bottom: 15px; }
-        .food-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+        .food-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
         .food-item:last-child { border-bottom: none; }
         .food-item.food-item-new { animation: entrySlideIn 0.35s cubic-bezier(.22,1,.36,1) both, entryHighlight 1.1s ease; }
         .food-item.removing { animation: entrySlideOut 0.22s ease forwards; }
+        .food-item-content { flex: 1; cursor: pointer; transition: opacity 0.2s ease; }
+        .food-item-content:active { opacity: 0.6; }
         .food-macros-text { color: var(--text-muted); font-size: 0.75rem; }
-        .delete-btn { color: var(--header-red); background: none; border: none; font-weight: bold; margin-left: 10px; cursor: pointer; transition: transform 0.15s ease; }
+        .delete-btn { color: var(--header-red); background: none; border: none; font-weight: bold; margin-left: 10px; cursor: pointer; transition: transform 0.15s ease; padding: 5px; }
         .delete-btn:active { transform: scale(0.8) rotate(90deg); }
 
         .add-food-btn { width: 100%; background: none; border: none; color: var(--header-red); font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 5px; cursor: pointer; padding: 10px 0; transition: transform 0.15s ease, opacity 0.15s ease; }
@@ -307,7 +309,7 @@
     </div>
     
     <div class="footer-version">
-        v2.5.0 | Integracion iOS Atajos + Escaner Nativo
+        v2.6.0 | Edición de porciones clickeables en diario
     </div>
 </div>
 
@@ -443,7 +445,7 @@
 <div class="modal" id="quantity-modal">
     <div class="modal-header-nav">
         <button onclick="closeModalAnim('quantity-modal')">&lt;</button>
-        <span>Cantidad</span>
+        <span id="quantity-modal-title">Cantidad</span>
         <span></span>
     </div>
     <div class="qty-modal-content">
@@ -469,7 +471,7 @@
             <div class="qty-preview-col"><span id="qty-prev-fat">0 g</span><span>Grasa</span></div>
         </div>
 
-        <button class="btn-primary" onclick="confirmAddFood()">Agregar</button>
+        <button class="btn-primary" id="quantity-btn-label" onclick="confirmAddFood()">Agregar</button>
     </div>
 </div>
 
@@ -547,6 +549,7 @@
     let currentTab = 'mine';
     let html5QrCode = null; 
     let justAddedEntryId = null;
+    let editingEntryId = null;
     let draftRecipe = { name: '', ingredients: [] };
 
     function loadData() {
@@ -999,11 +1002,16 @@
         });
     }
 
-    let pendingFood = null; 
-
+    // --- FUNCIONES DE EDICIÓN Y CANTIDAD ---
     function openQuantityModal(name, cal100, pro100, car100, fat100, sourceTab) {
-        pendingFood = { name, cal100, pro100, car100, fat100, sourceTab: sourceTab || currentTab };
+        pendingFood = { 
+            name, cal100, pro100, car100, fat100, 
+            sourceTab: sourceTab || currentTab, 
+            isEditing: false 
+        };
 
+        document.getElementById('quantity-modal-title').textContent = 'Cantidad';
+        document.getElementById('quantity-btn-label').textContent = 'Agregar';
         document.getElementById('qty-food-name').textContent = name;
         document.getElementById('qty-food-base').textContent = `${Math.round(cal100)} kcal por 100 g`;
         document.getElementById('qty-grams').value = 100;
@@ -1014,6 +1022,46 @@
         updateQtyPreview();
         openModalAnim('quantity-modal');
     }
+
+    window.openEditModal = function(id) {
+        const entry = entries.find(e => e.id === id);
+        if(!entry) return;
+        
+        editingEntryId = id;
+
+        // Recuperar valores base de la entrada, o intentar calcularlos si es antigua
+        let currentGrams = entry.grams;
+        let baseName = entry.baseName || entry.name.replace(/\s*\(\d+(?:\.\d+)?g\)$/i, '');
+
+        if (!currentGrams) {
+            const match = entry.name.match(/\((\d+(?:\.\d+)?)g\)$/i);
+            if (match) currentGrams = parseFloat(match[1]);
+            else currentGrams = 100;
+        }
+
+        let cal100 = entry.cal100 !== undefined ? entry.cal100 : (entry.cal / currentGrams) * 100;
+        let pro100 = entry.pro100 !== undefined ? entry.pro100 : (entry.pro / currentGrams) * 100;
+        let car100 = entry.car100 !== undefined ? entry.car100 : (entry.car / currentGrams) * 100;
+        let fat100 = entry.fat100 !== undefined ? entry.fat100 : (entry.fat / currentGrams) * 100;
+
+        pendingFood = {
+            name: baseName,
+            cal100: cal100,
+            pro100: pro100,
+            car100: car100,
+            fat100: fat100,
+            isEditing: true
+        };
+
+        document.getElementById('quantity-modal-title').textContent = 'Editar Cantidad';
+        document.getElementById('quantity-btn-label').textContent = 'Actualizar';
+        document.getElementById('qty-food-name').textContent = baseName;
+        document.getElementById('qty-food-base').textContent = `${Math.round(cal100)} kcal por 100 g`;
+        document.getElementById('qty-grams').value = currentGrams;
+
+        updateQtyPreview();
+        openModalAnim('quantity-modal');
+    };
 
     function setQtyGrams(g) {
         document.getElementById('qty-grams').value = g;
@@ -1054,6 +1102,35 @@
 
         const multiplier = grams / 100;
 
+        // Si estamos editando un elemento existente en el diario
+        if (pendingFood.isEditing && editingEntryId) {
+            const entryIndex = entries.findIndex(e => e.id === editingEntryId);
+            if (entryIndex !== -1) {
+                entries[entryIndex] = {
+                    ...entries[entryIndex],
+                    name: `${pendingFood.name} (${grams}g)`,
+                    baseName: pendingFood.name,
+                    grams: grams,
+                    cal100: pendingFood.cal100,
+                    pro100: pendingFood.pro100,
+                    car100: pendingFood.car100,
+                    fat100: pendingFood.fat100,
+                    cal: Math.round(pendingFood.cal100 * multiplier),
+                    pro: Math.round(pendingFood.pro100 * multiplier),
+                    car: Math.round(pendingFood.car100 * multiplier),
+                    fat: Math.round(pendingFood.fat100 * multiplier)
+                };
+                saveData();
+                closeModalAnim('quantity-modal');
+                pendingFood = null;
+                editingEntryId = null;
+                updateUI();
+                showToast('Exito: Cantidad actualizada');
+                return;
+            }
+        }
+
+        // Si estamos creando una receta
         if (currentMealTarget === 'recipe') {
             draftRecipe.ingredients.push({
                 name: pendingFood.name,
@@ -1070,10 +1147,17 @@
             return;
         }
 
+        // Si estamos agregando un elemento nuevo al diario
         const newEntry = {
             id: Date.now(),
             meal: currentMealTarget,
             name: `${pendingFood.name} (${grams}g)`,
+            baseName: pendingFood.name,
+            grams: grams,
+            cal100: pendingFood.cal100,
+            pro100: pendingFood.pro100,
+            car100: pendingFood.car100,
+            fat100: pendingFood.fat100,
             cal: Math.round(pendingFood.cal100 * multiplier),
             pro: Math.round(pendingFood.pro100 * multiplier),
             car: Math.round(pendingFood.car100 * multiplier),
@@ -1194,7 +1278,7 @@
                 const li = document.createElement('li');
                 li.className = 'food-item' + (e.id === justAddedEntryId ? ' food-item-new' : '');
                 li.innerHTML = `
-                    <div style="flex: 1;">
+                    <div class="food-item-content" onclick="openEditModal(${e.id})">
                         <div style="font-weight: 500;">${e.name}</div>
                         <div class="food-macros-text">${e.cal} kcal | P: ${e.pro}g | C: ${e.car}g | G: ${e.fat}g</div>
                     </div>
@@ -1248,8 +1332,6 @@
                 parsed = Array.isArray(temp) ? temp.flat(Infinity) : [temp];
                 
             } catch (e) {
-                // MODO DE EMERGENCIA: Si el atajo cortó el texto y el JSON está roto, 
-                // extraemos cada alimento individualmente usando Expresiones Regulares.
                 console.warn("JSON roto, usando extracción de emergencia.");
                 let matches = data.match(/\{[^{}]+\}/g);
                 if (matches) {
@@ -1270,12 +1352,32 @@
 
                 let count = 0;
                 parsed.forEach(item => {
-                    // Validar que el alimento tenga nombre para evitar celdas vacías
                     if (item && item.name) {
+                        // Intentamos extraer los gramos del nombre que generó la IA
+                        let baseGrams = 100;
+                        let baseName = item.name;
+                        const match = item.name.match(/\((\d+(?:\.\d+)?)g\)$/i);
+                        if(match) {
+                            baseGrams = parseFloat(match[1]);
+                            baseName = item.name.replace(/\s*\(\d+(?:\.\d+)?g\)$/i, '');
+                        }
+
+                        // Guardamos las macros base por cada 100g para poder editarlos despues
+                        const cal100 = (item.cal / baseGrams) * 100;
+                        const pro100 = (item.pro / baseGrams) * 100;
+                        const car100 = (item.car / baseGrams) * 100;
+                        const fat100 = (item.fat / baseGrams) * 100;
+
                         const newEntry = {
                             id: Date.now() + Math.floor(Math.random() * 1000) + count,
                             meal: targetMeal,
                             name: item.name,
+                            baseName: baseName,
+                            grams: baseGrams,
+                            cal100: cal100 || 0,
+                            pro100: pro100 || 0,
+                            car100: car100 || 0,
+                            fat100: fat100 || 0,
                             cal: Math.round(item.cal || 0),
                             pro: Math.round(item.pro || 0),
                             car: Math.round(item.car || 0),
@@ -1288,7 +1390,7 @@
                 
                 if (count > 0) {
                     saveData();
-                    showToast('✓ ' + count + ' alimentos añadidos');
+                    showToast('Exito: ' + count + ' alimentos añadidos');
                 } else {
                     showToast('No se encontraron alimentos legibles.');
                 }
