@@ -1311,7 +1311,7 @@
         document.getElementById('top-fat-bar').style.width = pFat + '%';
     }
 
-    // INTERCEPTAR DATOS DEL ATAJO DE APPLE
+   // INTERCEPTAR DATOS DEL ATAJO DE APPLE
     function checkShortcutData() {
         const params = new URLSearchParams(window.location.search);
         let data = params.get('data');
@@ -1351,6 +1351,8 @@
                 else if (hour >= 18) targetMeal = 'cena';
 
                 let count = 0;
+                let nuevosGuardados = 0; // Contador para saber cuántos se guardaron en la biblioteca
+
                 parsed.forEach(item => {
                     if (item && item.name) {
                         // Intentamos extraer los gramos del nombre que generó la IA
@@ -1359,7 +1361,7 @@
                         const match = item.name.match(/\((\d+(?:\.\d+)?)g\)$/i);
                         if(match) {
                             baseGrams = parseFloat(match[1]);
-                            baseName = item.name.replace(/\s*\(\d+(?:\.\d+)?g\)$/i, '');
+                            baseName = item.name.replace(/\s*\(\d+(?:\.\d+)?g\)$/i, '').trim();
                         }
 
                         // Guardamos las macros base por cada 100g para poder editarlos despues
@@ -1384,13 +1386,33 @@
                             fat: Math.round(item.fat || 0)
                         };
                         entries.push(newEntry);
+                        
+                        // Guardar automáticamente en "Mis Alimentos" si no existe previamente
+                        const alreadySaved = customFoods.some(f => f.product_name.toLowerCase() === baseName.toLowerCase());
+                        if (!alreadySaved) {
+                            customFoods.push({
+                                id: 'ai_' + Date.now() + count,
+                                product_name: baseName,
+                                code: '',
+                                nutriments: {
+                                    'energy-kcal_100g': Math.round(cal100 || 0),
+                                    'proteins_100g': pro100 || 0,
+                                    'carbohydrates_100g': car100 || 0,
+                                    'fat_100g': fat100 || 0
+                                }
+                            });
+                            nuevosGuardados++;
+                        }
+
                         count++;
                     }
                 });
                 
                 if (count > 0) {
                     saveData();
-                    showToast('Exito: ' + count + ' alimentos añadidos');
+                    let msg = `Exito: ${count} añadidos al diario`;
+                    if (nuevosGuardados > 0) msg += ` (${nuevosGuardados} guardados en Mis Alimentos)`;
+                    showToast(msg);
                 } else {
                     showToast('No se encontraron alimentos legibles.');
                 }
